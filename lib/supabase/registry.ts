@@ -1,0 +1,207 @@
+import { ensureSupabaseClient } from "@/lib/supabase/client"
+import type { SupabaseFetchResult, SupabaseRegistration } from "@/lib/supabase/types"
+
+const DEFAULT_PAGE_SIZE = 25
+
+function normalizeError(error: Error | null): string | undefined {
+  return error?.message
+}
+
+export async function fetchStudents(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+) {
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+  const supabaseClient = ensureSupabaseClient()
+  const { data, error, count } = await supabaseClient
+    .from("students")
+    .select("*", { count: "exact" })
+    .range(from, to)
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    throw new Error(normalizeError(error) ?? "Failed to fetch students")
+  }
+
+  return {
+    data: data ?? [],
+    total: count ?? 0,
+  } as SupabaseFetchResult<any>
+}
+
+export async function fetchStudentById(id: string) {
+  const supabaseClient = ensureSupabaseClient()
+  const { data, error } = await supabaseClient
+    .from("students")
+    .select("*")
+    .eq("id", id)
+    .single()
+
+  if (error) {
+    throw new Error(normalizeError(error) ?? "Failed to fetch student")
+  }
+
+  return data
+}
+
+export async function fetchAnnouncements() {
+  const supabaseClient = ensureSupabaseClient()
+  const { data, error } = await supabaseClient
+    .from("announcements")
+    .select("*")
+    .order("date", { ascending: false })
+
+  if (error) {
+    throw new Error(normalizeError(error) ?? "Failed to fetch announcements")
+  }
+
+  return data ?? []
+}
+
+export async function fetchUniversities() {
+  const supabaseClient = ensureSupabaseClient()
+  const { data, error } = await supabaseClient
+    .from("universities")
+    .select("*")
+    .order("name", { ascending: true })
+
+  if (error) {
+    throw new Error(normalizeError(error) ?? "Failed to fetch universities")
+  }
+
+  return data ?? []
+}
+
+export async function fetchPendingRegistrations() {
+  const response = await fetch("/api/registrations", {
+    cache: "no-store",
+  })
+
+  const result = await response.json()
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message ?? "Failed to fetch registrations")
+  }
+
+  return result.data ?? []
+}
+
+export async function createRegistration(registration: Omit<SupabaseRegistration, "id" | "created_at">) {
+  const response = await fetch("/api/registrations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(registration),
+  })
+
+  const result = await response.json()
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message ?? "Failed to create registration")
+  }
+
+  return result.data
+}
+
+export async function fetchEditRequests() {
+  const supabaseClient = ensureSupabaseClient()
+  const { data, error } = await supabaseClient
+    .from("edit_requests")
+    .select("*")
+    .order("submitted_date", { ascending: false })
+
+  if (error) {
+    throw new Error(normalizeError(error) ?? "Failed to fetch edit requests")
+  }
+
+  return data ?? []
+}
+
+export async function fetchStudentByIdentifier(identifier: string) {
+  const supabaseClient = ensureSupabaseClient()
+  const normalized = identifier.trim()
+
+  const membershipLookup = await supabaseClient
+    .from("users")
+    .select("*")
+    .eq("membership_number", normalized)
+    .maybeSingle()
+
+  if (membershipLookup.error) {
+    throw new Error(normalizeError(membershipLookup.error) ?? "Failed to verify student identity from users")
+  }
+
+  if (membershipLookup.data) {
+    return membershipLookup.data
+  }
+
+  const qrLookup = await supabaseClient
+    .from("users")
+    .select("*")
+    .eq("qr_code", normalized)
+    .maybeSingle()
+
+  if (qrLookup.error) {
+    throw new Error(normalizeError(qrLookup.error) ?? "Failed to verify student identity from users")
+  }
+
+  if (qrLookup.data) {
+    return qrLookup.data
+  }
+
+  const identityLookup = await supabaseClient
+    .from("membership_identities")
+    .select("user_id")
+    .eq("membership_id", normalized)
+    .maybeSingle()
+
+  if (identityLookup.error) {
+    throw new Error(normalizeError(identityLookup.error) ?? "Failed to verify student identity from membership_identities")
+  }
+
+  if (identityLookup.data?.user_id) {
+    const profileLookup = await supabaseClient
+      .from("users")
+      .select("*")
+      .eq("id", identityLookup.data.user_id)
+      .maybeSingle()
+
+    if (profileLookup.error) {
+      throw new Error(normalizeError(profileLookup.error) ?? "Failed to load verified profile")
+    }
+
+    if (profileLookup.data) {
+      return profileLookup.data
+    }
+  }
+
+  const verificationLookup = await supabaseClient
+    .from("membership_identities")
+    .select("user_id")
+    .or(`verification_url.eq.${normalized},verification_token.eq.${normalized},qr_code_data.eq.${normalized}`)
+    .limit(1)
+
+  if (verificationLookup.error) {
+    throw new Error(normalizeError(verificationLookup.error) ?? "Failed to verify student identity from membership_identities")
+  }
+
+  if (verificationLookup.data?.[0]?.user_id) {
+    const profileLookup = await supabaseClient
+      .from("users")
+      .select("*")
+      .eq("id", verificationLookup.data[0].user_id)
+      .maybeSingle()
+
+    if (profileLookup.error) {
+      throw new Error(normalizeError(profileLookup.error) ?? "Failed to load verified profile")
+    }
+
+    if (profileLookup.data) {
+      return profileLookup.data
+    }
+  }
+
+  return null
+}
