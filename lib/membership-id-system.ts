@@ -71,9 +71,14 @@ export function generateVerificationToken(): string {
  * @param origin - Base URL (default: https://your-domain.com)
  * @returns QR code data string (URL)
  */
+const DEFAULT_VERIFICATION_ORIGIN =
+  process.env.NEXT_PUBLIC_APP_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ??
+  (typeof window !== "undefined" ? window.location.origin : "https://registry.nukafs-sl.org")
+
 export function generateQrCodeData(
   verificationToken: string,
-  origin: string = "https://registry.nukafs-sl.org"
+  origin: string = DEFAULT_VERIFICATION_ORIGIN
 ): string {
   return `${origin}/verify/${verificationToken}`
 }
@@ -90,7 +95,7 @@ export function generateQrCodeData(
 export function createMembershipIdentity(
   membershipSequence: number,
   membershipType: "student" | "stakeholder" = "student",
-  origin: string = "https://registry.nukafs-sl.org"
+  origin: string = DEFAULT_VERIFICATION_ORIGIN
 ): MembershipIdentity {
   const isStakeholder = membershipType === "stakeholder"
   const membershipId = isStakeholder

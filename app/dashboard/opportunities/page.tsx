@@ -12,7 +12,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import type { Opportunity } from "@/lib/mock-data"
+// Minimal opportunity shape used by UI
+type Opportunity = {
+  id: string
+  title: string
+  organization: string
+  description: string
+  type: string
+  deadline?: string
+  tags: string[]
+  amount?: string
+  location?: string
+}
 
 export default function OpportunitiesPage() {
   const [activeTab, setActiveTab] = useState<string>("Scholarship")

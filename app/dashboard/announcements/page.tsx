@@ -10,7 +10,16 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/dashboard/ui-bits"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Announcement } from "@/lib/mock-data"
+// Minimal announcement shape used by the UI
+type Announcement = {
+  id: string
+  title: string
+  body: string
+  date: string
+  pinned?: boolean
+  category?: string
+  author?: string
+}
 
 export default function AnnouncementsPage() {
   const { announcements } = useAppState()

@@ -10,7 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/dashboard/ui-bits"
 import { toast } from "sonner"
-import { PendingRegistration } from "@/lib/mock-data"
+// Minimal pending registration shape used by approvals UI
+type PendingRegistration = {
+  id: string
+  fullName?: string
+  name?: string
+  email: string
+  phone: string
+  district?: string
+  submittedDate: string
+}
 
 export default function RegistrationApprovalsPage() {
   const { pendingRegistrations, approveRegistration, rejectRegistration } = useAppState()

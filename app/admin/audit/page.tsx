@@ -25,7 +25,15 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import type { AuditEntry } from "@/lib/mock-data"
+// Minimal audit entry type used by the UI (sourced from backend audit log)
+type AuditEntry = {
+  id: string
+  actor: string
+  action: string
+  target: string
+  timestamp: string
+  type: "create" | "update" | "delete" | "approve" | "login"
+}
 
 // Extended mock log entries for richer audit demonstration
 const EXTENDED_LOGS: (AuditEntry & { role: string; module: string; ip: string; status: "success" | "failed" })[] = [

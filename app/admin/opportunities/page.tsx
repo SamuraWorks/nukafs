@@ -26,33 +26,7 @@ import {
 } from "@/components/ui/select"
 import { OPPORTUNITY_TYPES } from "@/lib/constants/opportunities-announcements"
 
-// Mock opportunities data - replace with real data from API
-const MOCK_OPPORTUNITIES = [
-  {
-    id: "opp_1",
-    title: "Google Software Engineering Internship 2025",
-    category: "Internships",
-    organizationName: "Google",
-    description: "Join Google's internship program for talented software engineers",
-    deadline: "2025-12-31",
-    location: "Freetown, Remote",
-    flyerUrl: null,
-    publishedAt: "2025-01-15",
-    status: "published",
-  },
-  {
-    id: "opp_2",
-    title: "World Bank Development Scholarship",
-    category: "Scholarships",
-    organizationName: "World Bank",
-    description: "Full scholarship for masters program in development economics",
-    deadline: "2025-06-30",
-    location: "Washington DC",
-    flyerUrl: null,
-    publishedAt: "2025-01-10",
-    status: "published",
-  },
-]
+// In production, opportunities come from app state (Supabase). Fallback to empty list.
 
 export default function OpportunitiesPage() {
   const { currentUser, currentRole } = useAppState()
@@ -63,18 +37,21 @@ export default function OpportunitiesPage() {
     currentRole === "super_admin" ||
     (currentRole === "stakeholder" && currentUser?.status === "active")
 
-  const filteredOpportunities = useMemo(() => {
-    return MOCK_OPPORTUNITIES.filter((opp) => {
-      const matchesSearch =
-        opp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        opp.organizationName.toLowerCase().includes(searchQuery.toLowerCase())
+  const { opportunities } = useAppState()
 
-      const matchesCategory =
-        selectedCategory === "all" || opp.category === selectedCategory
+  const filteredOpportunities = useMemo(() => {
+    const list = opportunities ?? []
+    return list.filter((opp: any) => {
+      const title = String(opp.title ?? "")
+      const org = String(opp.organizationName ?? opp.organization ?? "")
+      const category = String(opp.category ?? opp.type ?? "")
+
+      const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) || org.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCategory = selectedCategory === "all" || category === selectedCategory
 
       return matchesSearch && matchesCategory
     })
-  }, [searchQuery, selectedCategory])
+  }, [opportunities, searchQuery, selectedCategory])
 
   const isDeadlineSoon = (deadline: string) => {
     const days = Math.floor(

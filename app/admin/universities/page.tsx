@@ -27,8 +27,6 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "sonner"
-import { membersByUniversity } from "@/lib/mock-data"
-
 interface University {
   id: string
   name: string
@@ -43,73 +41,31 @@ interface University {
   courses: string[]
   description: string
 }
-
-const UNIVERSITIES_DATA: University[] = [
-  {
-    id: "uni_1", name: "Fourah Bay College (USL)", shortName: "FBC", campus: "Mount Aureol", region: "Western Area",
-    totalStudents: 620, status: "active", dateAdded: "2024-01-10",
-    faculties: ["Arts", "Science & Technology", "Social Sciences & Law", "Engineering & Architecture"],
-    departments: ["Computer Science", "Physics", "Economics", "Law", "Civil Engineering"],
-    courses: ["Computer Science", "Physics", "Economics", "Law", "Civil Engineering", "English", "History"],
-    description: "The oldest university in West Africa, established in 1827. FBC is affiliated with the University of Sierra Leone and is known for excellence in the arts and sciences."
-  },
-  {
-    id: "uni_2", name: "Njala University", shortName: "Njala", campus: "Njala", region: "Southern Province",
-    totalStudents: 540, status: "active", dateAdded: "2024-01-12",
-    faculties: ["Agriculture", "Environmental Sciences", "Education", "Health Sciences"],
-    departments: ["Agriculture", "Forestry", "Nursing", "Education"],
-    courses: ["Agriculture", "Forestry & Wildlife", "Nursing", "Biology", "Education"],
-    description: "A leading institution for agricultural and environmental sciences in Sierra Leone. Njala University plays a key role in food security research."
-  },
-  {
-    id: "uni_3", name: "Institute of Public Administration (IPAM)", shortName: "IPAM", campus: "Tower Hill", region: "Western Area",
-    totalStudents: 410, status: "active", dateAdded: "2024-01-15",
-    faculties: ["Public Administration", "Business Studies", "Social Sciences"],
-    departments: ["Public Administration", "Accounting", "Human Resource Management"],
-    courses: ["Public Administration", "Accounting & Finance", "HRM", "Business Management"],
-    description: "Specialised in public administration and governance. IPAM prepares students for roles in government, NGOs, and public institutions."
-  },
-  {
-    id: "uni_4", name: "Ernest Bai Koroma University", shortName: "EBK", campus: "Makeni", region: "Northern Province",
-    totalStudents: 320, status: "active", dateAdded: "2024-02-01",
-    faculties: ["Science & Technology", "Business", "Humanities"],
-    departments: ["IT", "Business Studies", "Mass Communication"],
-    courses: ["Information Technology", "Business Administration", "Mass Communication"],
-    description: "A modern university in the Northern Province focused on technology and business education to serve northern communities."
-  },
-  {
-    id: "uni_5", name: "Eastern Technical University", shortName: "ETU", campus: "Kenema", region: "Eastern Province",
-    totalStudents: 240, status: "active", dateAdded: "2024-02-14",
-    faculties: ["Engineering", "Technology", "Applied Sciences"],
-    departments: ["Electrical Engineering", "Civil Engineering", "Computer Engineering"],
-    courses: ["Electrical Engineering", "Civil Engineering", "Computer Engineering", "Architecture"],
-    description: "A technical university providing hands-on engineering and applied science education to students from the Eastern Province."
-  },
-  {
-    id: "uni_6", name: "Milton Margai Technical University", shortName: "MMTU", campus: "Goderich", region: "Western Area",
-    totalStudents: 210, status: "active", dateAdded: "2024-03-01",
-    faculties: ["Technical Studies", "Applied Sciences", "Vocational Education"],
-    departments: ["Mechanical Engineering", "Electronics", "Building & Construction"],
-    courses: ["Mechanical Engineering", "Electronics Technology", "Building Construction", "Plumbing"],
-    description: "Focuses on vocational and technical training, helping students develop practical skills for the labour market."
-  },
-  {
-    id: "uni_7", name: "Limkokwing University", shortName: "LKW", campus: "Aberdeen", region: "Western Area",
-    totalStudents: 140, status: "active", dateAdded: "2024-03-15",
-    faculties: ["Creative Multimedia", "Design", "IT & Computing"],
-    departments: ["Graphic Design", "Fashion", "Digital Media", "Software Development"],
-    courses: ["Graphic Design", "Fashion Design", "Digital Media Production", "Software Engineering"],
-    description: "A private university specialised in creative arts, design, and digital technology. Partnered with institutions in Malaysia and Africa."
-  },
-]
+const UNIVERSITIES_DATA: University[] = []
 
 export default function UniversitiesManagerPage() {
-  const { students } = useAppState()
+  const { students, universitiesList } = useAppState()
   const [search, setSearch] = useState("")
   const [selectedUni, setSelectedUni] = useState<University | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [confirmDeactivate, setConfirmDeactivate] = useState<University | null>(null)
-  const [unis, setUnis] = useState(UNIVERSITIES_DATA)
+
+  const initialUnis: University[] = (universitiesList ?? []).map(u => ({
+    id: u.id,
+    name: u.name,
+    shortName: (u.short_name as string) || (u.name || "").split(" ").map((w: string) => w[0]).join("").slice(0, 4).toUpperCase(),
+    campus: (u.campus as string) ?? "",
+    region: (u.region as string) ?? "",
+    totalStudents: (students ?? []).filter((s: any) => s.university_id === u.id).length,
+    status: u.active ? "active" : "inactive",
+    dateAdded: (u.date_created as string) ?? "",
+    faculties: (u.faculties as string[]) ?? [],
+    departments: (u.departments as string[]) ?? [],
+    courses: (u.courses as string[]) ?? [],
+    description: (u.description as string) ?? "",
+  }))
+
+  const [unis, setUnis] = useState<University[]>(initialUnis)
   const [newName, setNewName] = useState("")
   const [newCampus, setNewCampus] = useState("")
   const [newRegion, setNewRegion] = useState("")

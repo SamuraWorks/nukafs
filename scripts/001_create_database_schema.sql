@@ -32,6 +32,11 @@ CREATE INDEX IF NOT EXISTS idx_districts_name ON public.districts(name);
 CREATE INDEX IF NOT EXISTS idx_districts_code ON public.districts(code);
 CREATE INDEX IF NOT EXISTS idx_districts_status ON public.districts(status);
 
+-- Add missing columns to existing districts table
+ALTER TABLE IF EXISTS public.districts ADD COLUMN IF NOT EXISTS population_estimate INTEGER;
+ALTER TABLE IF EXISTS public.districts ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+ALTER TABLE IF EXISTS public.districts ADD COLUMN IF NOT EXISTS description TEXT;
+
 -- Insert official districts
 INSERT INTO public.districts (name, code, description) VALUES 
   ('Koinadugu', 'KDU', 'Koinadugu District with 11 chiefdoms'),
@@ -57,6 +62,11 @@ CREATE TABLE IF NOT EXISTS public.chiefdoms (
 CREATE INDEX IF NOT EXISTS idx_chiefdoms_district_id ON public.chiefdoms(district_id);
 CREATE INDEX IF NOT EXISTS idx_chiefdoms_name ON public.chiefdoms(name);
 CREATE INDEX IF NOT EXISTS idx_chiefdoms_status ON public.chiefdoms(status);
+
+-- Add missing columns to existing chiefdoms table
+ALTER TABLE IF EXISTS public.chiefdoms ADD COLUMN IF NOT EXISTS code VARCHAR(10);
+ALTER TABLE IF EXISTS public.chiefdoms ADD COLUMN IF NOT EXISTS population_estimate INTEGER;
+ALTER TABLE IF EXISTS public.chiefdoms ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
 
 -- Insert Koinadugu chiefdoms (11 total)
 INSERT INTO public.chiefdoms (district_id, name, code)
@@ -190,9 +200,16 @@ ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS date_approved TIMEST
 ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
 ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES public.users(id);
 ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS updated_by UUID REFERENCES public.users(id);
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending'
+  CHECK (status IN ('pending', 'active_complete', 'active_partial', 'archived', 'deleted'));
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS verification_status VARCHAR(50) DEFAULT 'unverified'
+  CHECK (verification_status IN ('unverified', 'verified', 'rejected'));
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'student'
+  CHECK (role IN ('student', 'executive', 'stakeholder', 'super_admin'));
 ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS is_migrated_from_legacy BOOLEAN DEFAULT FALSE;
 ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS legacy_membership_number VARCHAR(100);
 ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS legacy_data_json JSONB;
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
 
 -- Indexes for Users table
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
@@ -243,6 +260,10 @@ CREATE TABLE IF NOT EXISTS public.membership_identities (
   deactivation_reason TEXT
 );
 
+-- Add missing columns to existing membership_identities table
+ALTER TABLE IF EXISTS public.membership_identities ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE IF EXISTS public.membership_identities ADD COLUMN IF NOT EXISTS deactivation_reason TEXT;
+
 -- Indexes for Membership Identities
 CREATE INDEX IF NOT EXISTS idx_membership_user_id ON public.membership_identities(user_id);
 CREATE INDEX IF NOT EXISTS idx_membership_id ON public.membership_identities(membership_id);
@@ -290,6 +311,15 @@ CREATE TABLE IF NOT EXISTS public.registrations (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at TIMESTAMP
 );
+
+-- Add missing columns to existing registrations table
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS reviewed_notes TEXT;
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS rejected_at TIMESTAMP;
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'submitted'
+  CHECK (status IN ('submitted', 'under_review', 'approved', 'rejected', 'pending_payment'));
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL;
 
 -- Indexes for Registrations
 CREATE INDEX IF NOT EXISTS idx_registrations_status ON public.registrations(status);
@@ -345,6 +375,11 @@ CREATE INDEX IF NOT EXISTS idx_stakeholder_is_verified ON public.stakeholder_pro
 CREATE INDEX IF NOT EXISTS idx_stakeholder_is_approved ON public.stakeholder_profiles(is_approved_for_publishing);
 CREATE INDEX IF NOT EXISTS idx_stakeholder_created_at ON public.stakeholder_profiles(created_at DESC);
 
+-- Add missing columns to existing stakeholder_profiles table
+ALTER TABLE IF EXISTS public.stakeholder_profiles ADD COLUMN IF NOT EXISTS total_opportunities_published INTEGER DEFAULT 0;
+ALTER TABLE IF EXISTS public.stakeholder_profiles ADD COLUMN IF NOT EXISTS total_announcements_published INTEGER DEFAULT 0;
+ALTER TABLE IF EXISTS public.stakeholder_profiles ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
+
 -- ===== Opportunities (Jobs, Scholarships, etc) =====
 CREATE TABLE IF NOT EXISTS public.opportunities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -395,6 +430,26 @@ CREATE TABLE IF NOT EXISTS public.opportunities (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at TIMESTAMP
 );
+
+-- Add missing columns to existing opportunities table
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS flyer_url TEXT;
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS supporting_document_url TEXT;
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS organization_name VARCHAR(255);
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS target_university VARCHAR(255);
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS target_courses TEXT[];
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS target_academic_level VARCHAR(50);
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS target_locations TEXT[];
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS published_by UUID REFERENCES public.users(id);
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS published_at TIMESTAMP;
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP;
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft'
+  CHECK (status IN ('draft', 'published', 'archived', 'expired'));
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'uncategorized';
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS applicant_count INTEGER DEFAULT 0;
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0;
+ALTER TABLE IF EXISTS public.opportunities ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
 
 -- Indexes for Opportunities
 CREATE INDEX IF NOT EXISTS idx_opportunities_status ON public.opportunities(status);
@@ -457,6 +512,25 @@ CREATE TABLE IF NOT EXISTS public.announcements (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   deleted_at TIMESTAMP
 );
+
+-- Add missing columns to existing announcements table
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS excerpt VARCHAR(500);
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS featured_image_url TEXT;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS flyer_url TEXT;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS pdf_attachment_url TEXT;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS published_by UUID REFERENCES public.users(id);
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS published_at TIMESTAMP;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMP;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS pin_priority INTEGER;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS event_date DATE;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS external_link TEXT;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft'
+  CHECK (status IN ('draft', 'published', 'archived'));
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0;
+ALTER TABLE IF EXISTS public.announcements ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
 
 -- Indexes for Announcements
 CREATE INDEX IF NOT EXISTS idx_announcements_status ON public.announcements(status);
@@ -528,6 +602,19 @@ CREATE INDEX IF NOT EXISTS idx_audit_created_at_module ON public.audit_logs(crea
 -- CREATE TABLE public.audit_logs_2024_01 PARTITION OF public.audit_logs
 --   FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
 
+-- Add missing columns to existing audit_logs table
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS action VARCHAR(100);
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS module VARCHAR(100);
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS type VARCHAR(50);
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'success';
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS error_message TEXT;
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS target_entity VARCHAR(255);
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS target_id VARCHAR(255);
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS changes JSONB;
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS ip_address INET;
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS user_agent TEXT;
+ALTER TABLE IF EXISTS public.audit_logs ADD COLUMN IF NOT EXISTS request_url TEXT;
+
 -- ===== System Configuration (Dynamic Settings) =====
 CREATE TABLE IF NOT EXISTS public.system_config (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -546,6 +633,11 @@ CREATE TABLE IF NOT EXISTS public.system_config (
 
 -- Index for system config
 CREATE INDEX IF NOT EXISTS idx_system_config_key ON public.system_config(key);
+
+-- Add missing columns to existing system_config table
+ALTER TABLE IF EXISTS public.system_config ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE IF EXISTS public.system_config ADD COLUMN IF NOT EXISTS type VARCHAR(50);
+ALTER TABLE IF EXISTS public.system_config ADD COLUMN IF NOT EXISTS updated_by UUID REFERENCES public.users(id);
 
 -- Insert initial configuration values
 INSERT INTO public.system_config (key, value, description, type) VALUES
@@ -598,6 +690,15 @@ CREATE INDEX IF NOT EXISTS idx_file_metadata_storage_path ON public.file_metadat
 CREATE INDEX IF NOT EXISTS idx_file_metadata_uploaded_by ON public.file_metadata(uploaded_by);
 CREATE INDEX IF NOT EXISTS idx_file_metadata_created_at ON public.file_metadata(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_file_metadata_associated_entity ON public.file_metadata(associated_entity, associated_entity_id);
+
+-- Add missing columns to existing file_metadata table
+ALTER TABLE IF EXISTS public.file_metadata ADD COLUMN IF NOT EXISTS file_type VARCHAR(100);
+ALTER TABLE IF EXISTS public.file_metadata ADD COLUMN IF NOT EXISTS mime_type VARCHAR(100);
+ALTER TABLE IF EXISTS public.file_metadata ADD COLUMN IF NOT EXISTS is_scanned BOOLEAN DEFAULT FALSE;
+ALTER TABLE IF EXISTS public.file_metadata ADD COLUMN IF NOT EXISTS scan_result VARCHAR(50);
+ALTER TABLE IF EXISTS public.file_metadata ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE;
+ALTER TABLE IF EXISTS public.file_metadata ADD COLUMN IF NOT EXISTS signed_url_expiry TIMESTAMP;
+ALTER TABLE IF EXISTS public.file_metadata ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
 
 -- ============================================================================
 -- PHASE 4: ENABLE ROW LEVEL SECURITY (RLS)

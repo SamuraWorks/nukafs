@@ -25,7 +25,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import type { TeamMember, Role } from "@/lib/mock-data"
+// Local minimal types for team members (backend-provided shapes)
+type Role = "student" | "executive" | "stakeholder" | "super_admin"
+
+type TeamMember = {
+  id: string
+  name: string
+  email: string
+  role: Role
+  title: string
+  status: "active" | "invited" | "disabled"
+  lastActive?: string
+}
 
 const ROLE_BADGE: Record<Role, { label: string; className: string }> = {
   student: { label: "Student", className: "bg-muted text-muted-foreground border-muted-foreground/20" },

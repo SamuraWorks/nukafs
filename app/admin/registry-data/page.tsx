@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Search, Plus, Edit2, PowerOff, Power } from "lucide-react"
+import { useAppState } from "@/lib/context/app-state-context"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,48 +11,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 
-// Mock Data
-const MOCK_DATA = {
-  universities: [
-    { id: "1", name: "University of Sierra Leone (USL)", status: "active" },
-    { id: "2", name: "Njala University (NU)", status: "active" },
-    { id: "3", name: "Ernest Bai Koroma University (EBKUST)", status: "active" },
-    { id: "4", name: "Milton Margai Technical University", status: "inactive" },
-  ],
-  campuses: [
-    { id: "1", name: "Fourah Bay College", parent: "USL", status: "active" },
-    { id: "2", name: "IPAM", parent: "USL", status: "active" },
-    { id: "3", name: "COMAHS", parent: "USL", status: "active" },
-    { id: "4", name: "Njala Mokonde", parent: "NU", status: "active" },
-  ],
-  faculties: [
-    { id: "1", name: "Faculty of Engineering", status: "active" },
-    { id: "2", name: "Faculty of Arts", status: "active" },
-    { id: "3", name: "Faculty of Science", status: "active" },
-  ],
-  departments: [
-    { id: "1", name: "Electrical Engineering", parent: "Faculty of Engineering", status: "active" },
-    { id: "2", name: "Computer Science", parent: "Faculty of Science", status: "active" },
-  ],
-  courses: [
-    { id: "1", name: "BSc Computer Science", parent: "Computer Science", status: "active" },
-    { id: "2", name: "BEng Electrical Engineering", parent: "Electrical Engineering", status: "active" },
-  ],
-  levels: [
-    { id: "1", name: "Year 1", status: "active" },
-    { id: "2", name: "Year 2", status: "active" },
-    { id: "3", name: "Year 3", status: "active" },
-    { id: "4", name: "Year 4", status: "active" },
-    { id: "5", name: "Graduate / Alumni", status: "active" },
-  ]
-}
+// Registry reference data: production should source these from the backend.
 
 export default function RegistryDataPage() {
   const [activeTab, setActiveTab] = useState("universities")
   const [searchQuery, setSearchQuery] = useState("")
 
+  const { universitiesList } = useAppState()
+
   const getActiveData = () => {
-    return MOCK_DATA[activeTab as keyof typeof MOCK_DATA] || []
+    if (activeTab === "universities") {
+      return (universitiesList ?? []).map((name, i) => ({ id: `uni_${i}_${name.replace(/\s+/g, "_")}`, name, status: "active" }))
+    }
+    return []
   }
 
   const filteredData = getActiveData().filter(item => 

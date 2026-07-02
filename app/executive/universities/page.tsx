@@ -1,20 +1,25 @@
 "use client"
 
 import { Building2, Search } from "lucide-react"
+import { useAppState } from "@/lib/context/app-state-context"
 import { PageHeader } from "@/components/dashboard/ui-bits"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 
-const universitiesMock = [
-  { id: 1, name: "Fourah Bay College (USL)", campuses: 1, faculties: 6, departments: 24, students: 620 },
-  { id: 2, name: "Njala University", campuses: 2, faculties: 7, departments: 28, students: 480 },
-  { id: 3, name: "Institute of Public Administration (IPAM)", campuses: 1, faculties: 4, departments: 12, students: 350 },
-  { id: 4, name: "College of Medicine and Allied Health Sciences", campuses: 1, faculties: 4, departments: 10, students: 210 },
-  { id: 5, name: "Ernest Bai Koroma University", campuses: 3, faculties: 5, departments: 18, students: 190 },
-]
+// Use real student data to derive university counts when available
 
 export default function UniversitiesManagerPage() {
+  const { students } = useAppState()
+
+  const counts = (students ?? []).reduce<Record<string, number>>((acc, s) => {
+    const name = s.university || "Unknown"
+    acc[name] = (acc[name] || 0) + 1
+    return acc
+  }, {})
+
+  const unis = Object.entries(counts).map(([name, studentsCount], i) => ({ id: `uni_${i}`, name, campuses: 1, faculties: 0, departments: 0, students: studentsCount }))
+
   return (
     <div className="flex flex-col gap-6 font-sans pb-10 max-w-5xl mx-auto">
       <PageHeader

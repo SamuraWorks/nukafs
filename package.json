@@ -9,6 +9,10 @@
     "start": "next start",
     "lint": "eslint ."
   },
+  "bin": {
+    "remove-other-users": "./scripts/admin/remove-other-users.mjs",
+    "upsert-universities": "./scripts/admin/upsert-universities.mjs"
+  },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
     "@supabase/supabase-js": "^2.108.2",

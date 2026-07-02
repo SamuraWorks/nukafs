@@ -41,17 +41,7 @@ import {
   Area,
   Legend,
 } from "recharts"
-import {
-  membersByUniversity,
-  membersByDepartment,
-  membersByLevel,
-  membersByGender,
-  membersByDistrict,
-  registrationTrend,
-  employmentStats,
-  topSkills,
-  scholarshipRequests,
-} from "@/lib/mock-data"
+import { analyticsService } from "@/lib/services/registry-service"
 
 const COLORS = [
   "oklch(0.52 0.12 158)",
@@ -152,6 +142,14 @@ export default function PlatformReportsPage() {
       description: "Your download will begin shortly.",
     })
   }
+
+  // Load analytics datasets
+  const registrationTrend = analyticsService.getRegistrationTrend()
+  const membersByUniversity = analyticsService.getMembersByUniversity()
+  const membersByDepartment = analyticsService.getMembersByDepartment()
+  const membersByLevel = analyticsService.getMembersByLevel()
+  const employmentStats = analyticsService.getEmploymentStats()
+  const scholarshipRequests = analyticsService.getScholarshipRequests()
 
   return (
     <div className="flex flex-col gap-6 font-sans pb-10 max-w-6xl mx-auto">

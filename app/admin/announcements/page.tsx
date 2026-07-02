@@ -28,33 +28,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 
-// Mock announcements data - replace with real data from API
-const MOCK_ANNOUNCEMENTS = [
-  {
-    id: "ann_1",
-    title: "Registration for Annual NUKaFs Conference 2025",
-    content:
-      "We are excited to announce the opening of registration for the 2025 NUKaFs Annual Conference...",
-    eventDate: "2025-03-15",
-    featuredImageUrl: null,
-    publishedAt: "2025-01-20",
-    status: "published",
-    isPinned: true,
-  },
-  {
-    id: "ann_2",
-    title: "New Membership Directory Published",
-    content: "The official 2025 NUKaFs Membership Directory is now available for download...",
-    eventDate: null,
-    featuredImageUrl: null,
-    publishedAt: "2025-01-18",
-    status: "published",
-    isPinned: false,
-  },
-]
+// Use announcements from app state (Supabase-backed in production)
 
 export default function AnnouncementsPage() {
-  const { currentRole } = useAppState()
+  const { currentRole, announcements, editAnnouncement, deleteAnnouncement } = useAppState()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedStatus, setSelectedStatus] = useState<string>("all")
 
@@ -74,28 +51,35 @@ export default function AnnouncementsPage() {
   }
 
   const filteredAnnouncements = useMemo(() => {
-    return MOCK_ANNOUNCEMENTS.filter((ann) => {
-      const matchesSearch = ann.title
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+    return (announcements ?? []).filter((ann) => {
+      const title = String(ann.title ?? "")
+      const content = String(ann.content ?? ann.body ?? "")
+      const status = String(ann.status ?? ann.state ?? "published")
+      const isPinned = Boolean(ann.isPinned ?? ann.pinned)
 
-      const matchesStatus =
-        selectedStatus === "all" || ann.status === selectedStatus
+      const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) || content.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesStatus = selectedStatus === "all" || status === selectedStatus
 
       return matchesSearch && matchesStatus
     })
-  }, [searchQuery, selectedStatus])
+  }, [announcements, searchQuery, selectedStatus])
 
   const handleDelete = (id: string) => {
-    // TODO: Delete from API
-    toast.success("Announcement deleted")
+    try {
+      deleteAnnouncement(id)
+      toast.success("Announcement deleted")
+    } catch (e) {
+      toast.error("Failed to delete announcement")
+    }
   }
 
   const handlePin = (id: string, isPinned: boolean) => {
-    // TODO: Update in API
-    toast.success(
-      isPinned ? "Announcement pinned" : "Announcement unpinned"
-    )
+    try {
+      editAnnouncement(id, { pinned: !isPinned })
+      toast.success(isPinned ? "Announcement unpinned" : "Announcement pinned")
+    } catch (e) {
+      toast.error("Failed to update pin status")
+    }
   }
 
   return (
