@@ -1,5 +1,5 @@
 /**
- * Bootstrap Script: Initialize Samuel Samura with NUKAFS-000001
+ * Bootstrap Script: Initialize Samuel Samura with NUKaFs-000001
  * 
  * Run this script once in production to permanently assign the first membership ID
  * to Samuel Samura as specified in requirements.
@@ -26,7 +26,7 @@ function generateVerificationToken() {
  * Bootstrap the membership system
  */
 async function bootstrap() {
-  console.log("🚀 Bootstrapping NUKAFS Membership ID System...")
+  console.log("🚀 Bootstrapping NUKaFs Membership ID System...")
 
   try {
     // 1. Find Samuel Samura's account
@@ -51,7 +51,7 @@ async function bootstrap() {
     const verificationUrl = `https://registry.nukafs-sl.org/verify/${verificationToken}`
 
     console.log("📝 Generating membership identity...")
-    console.log(`   ID: NUKAFS-000001`)
+    console.log(`   ID: NUKaFs-000001`)
     console.log(`   Type: Student (remains student even as Super Admin)`)
     console.log(`   QR Code Data: ${verificationUrl}`)
 
@@ -60,7 +60,7 @@ async function bootstrap() {
       .from("membership_identities")
       .insert({
         user_id: samuel.id,
-        membership_id: "NUKAFS-000001",
+        membership_id: "NUKaFs-000001",
         membership_type: "student",
         verification_token: verificationToken,
         verification_url: verificationUrl,
@@ -84,7 +84,7 @@ async function bootstrap() {
     const { error: updateError } = await supabase
       .from("users")
       .update({
-        membership_number: "NUKAFS-000001",
+        membership_number: "NUKaFs-000001",
         qr_code: verificationUrl,
         membership_sequence: 1,
         updated_at: new Date().toISOString(),
@@ -119,7 +119,7 @@ async function bootstrap() {
       actor_id: samuel.id,
       actor_name: samuel.full_name,
       action: "bootstrapped membership system",
-      target: "NUKAFS-000001",
+      target: "NUKaFs-000001",
       type: "system",
       module: "Membership",
       status: "success",
@@ -130,7 +130,7 @@ async function bootstrap() {
     console.log("\n✅ Bootstrap Complete!")
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     console.log(`Super Admin: ${samuel.full_name}`)
-    console.log(`Membership ID: NUKAFS-000001`)
+    console.log(`Membership ID: NUKaFs-000001`)
     console.log(`Membership Type: Student (permanent)`)
     console.log(`System Role: Super Admin`)
     console.log(`Verification Token: ${verificationToken.substring(0, 16)}...`)
@@ -140,7 +140,7 @@ async function bootstrap() {
     console.log("Next steps:")
     console.log("1. Update Samuel's profile photo using the profile editor")
     console.log("2. Test QR code scanning at the verification page")
-    console.log("3. Subsequent approved members will receive NUKAFS-000002, NUKAFS-000003, etc.")
+    console.log("3. Subsequent approved members will receive NUKaFs-000002, NUKaFs-000003, etc.")
     console.log(
       "4. Stakeholders will receive STK-000001, STK-000002, etc. in their own sequence\n"
     )

@@ -1,6 +1,7 @@
 import { readStorage } from "@/lib/storage/persistence"
 import { STORAGE_KEYS } from "@/lib/constants/storage-keys"
 import { fetchStudentByIdentifier } from "@/lib/supabase/registry"
+import { extractVerificationToken } from "@/lib/membership-id-system"
 import { memberToVerifiedProfile, type VerifiedMemberProfile } from "@/lib/membership"
 import { stats, membersByUniversity, membersByCourse, membersByDepartment, membersByLevel, membersByGender, membersByDistrict, membersByChiefdom, registrationTrend, employmentStats, topSkills, scholarshipRequests } from "@/lib/mock-data"
 import type { Student } from "@/lib/mock-data"
@@ -48,13 +49,43 @@ export const registryService = {
 export const memberService = {
   async verifyMembership(identifier: string): Promise<VerifiedMemberProfile | null> {
     try {
-      const student = await fetchStudentByIdentifier(identifier)
+      const normalizedIdentifier = identifier.trim()
+      const token = extractVerificationToken(normalizedIdentifier) ?? (normalizedIdentifier.match(/^[a-f0-9]{64}$/i) ? normalizedIdentifier : null)
+
+      let lookupIdentifier = normalizedIdentifier
+
+      if (token) {
+        const response = await fetch(`/api/membership-id?action=verify-token&token=${encodeURIComponent(token)}`, {
+          cache: "no-store",
+        })
+
+        if (!response.ok) {
+          return null
+        }
+
+        const payload = await response.json()
+        if (!payload?.valid || !payload?.membershipId) {
+          return null
+        }
+
+        lookupIdentifier = payload.membershipId
+      }
+
+      const student = await fetchStudentByIdentifier(lookupIdentifier)
       if (!student) {
         return null
       }
 
+      const status = String(student.status ?? student.membership_status ?? "").toLowerCase()
+      const verificationStatus = String(student.verification_status ?? "").toLowerCase()
+      const qrStatus = String(student.qr_code_status ?? student.qrCodeStatus ?? "active").toLowerCase()
+
+      if (status !== "active" || verificationStatus !== "verified" || qrStatus === "revoked" || qrStatus === "expired") {
+        return null
+      }
+
       const profile = memberToVerifiedProfile(student as any, (student as any)?.role)
-      if (profile.qrCodeStatus === "revoked" || profile.qrCodeStatus === "expired") {
+      if (profile.membershipStatus !== "active") {
         return null
       }
 

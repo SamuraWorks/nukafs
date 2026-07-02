@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input"
 export function HelpSupportPage({
   title = "Help & Support",
   description = "Find answers, contact support, and learn how to use the registry.",
-  portalName = "NUKAFS Registry",
+  portalName = "NUKaFs Registry",
 }: {
   title?: string
   description?: string
@@ -44,7 +44,7 @@ export function HelpSupportPage({
       toast.error("Please complete all fields.")
       return
     }
-    toast.success("Message sent to NUKAFS support (mock).")
+    toast.success("Message sent to NUKaFs support (mock).")
     setContactForm({ name: "", email: "", message: "" })
   }
 
@@ -60,10 +60,10 @@ export function HelpSupportPage({
             </div>
             <h3 className="text-sm font-bold">Email Support</h3>
             <a
-              href="mailto:secretariat@NUKAFS.org"
+              href="mailto:secretariat@NUKaFs.org"
               className="text-xs text-primary hover:underline"
             >
-              secretariat@NUKAFS.org
+              secretariat@NUKaFs.org
             </a>
           </CardContent>
         </Card>
@@ -191,7 +191,7 @@ export function HelpSupportPage({
           <div>
             <h3 className="font-bold">Platform Information</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {portalName} — National Union of Koinadugu and Falaba Students (NUKAFS-SL).
+              {portalName} — National Union of Koinadugu and Falaba Students (NUKaFs-SL).
               This platform is production-ready and backed by Supabase for secure registry data.
             </p>
           </div>

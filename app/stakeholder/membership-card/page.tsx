@@ -1,10 +1,14 @@
-import { MembershipCardPageView } from "@/components/account/membership-card-page"
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function StakeholderMembershipCardPage() {
-  return (
-    <MembershipCardPageView
-      title="Stakeholder Membership Card"
-      description="Your official NUKAFS stakeholder identification card with QR verification."
-    />
-  )
+  const router = useRouter()
+
+  useEffect(() => {
+    router.replace("/stakeholder/profile")
+  }, [router])
+
+  return null
 }

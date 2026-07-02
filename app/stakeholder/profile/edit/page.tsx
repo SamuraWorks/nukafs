@@ -1,5 +1,5 @@
-import ProfileEditor from "@/components/account/profile-editor"
+import StakeholderProfileEditor from "@/components/account/stakeholder-profile-editor"
 
 export default function StakeholderProfileEditPage() {
-  return <ProfileEditor backHref="/stakeholder/profile" />
+  return <StakeholderProfileEditor backHref="/stakeholder/profile" />
 }

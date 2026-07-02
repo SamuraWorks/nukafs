@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     let nextSequence = 1
     if (existingMembers && existingMembers.length > 0 && existingMembers[0].membership_id) {
       const lastId = existingMembers[0].membership_id
-      const match = lastId.match(/NUKAFS-(\d+)/)
+      const match = lastId.match(/NUKaFs-(\d+)/)
       if (match) {
         nextSequence = parseInt(match[1]) + 1
       }

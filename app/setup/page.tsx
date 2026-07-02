@@ -11,6 +11,11 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import {
+  OFFICIAL_DISTRICTS,
+  getChiefdomsForDistrict,
+  isValidChiefdomForDistrict,
+} from "@/lib/constants/districts-chiefdoms"
 
 function SetupPageContent() {
   const router = useRouter()
@@ -73,6 +78,17 @@ function SetupPageContent() {
 
     if (!formData.fullName || !formData.phone || !formData.email) {
       toast.error("Please provide your full name, phone number, and email address.")
+      return
+    }
+
+    // Validate district and chiefdom
+    if (!formData.district || !formData.chiefdom) {
+      toast.error("Please select both your district and chiefdom.")
+      return
+    }
+
+    if (!isValidChiefdomForDistrict(formData.district, formData.chiefdom)) {
+      toast.error("The selected chiefdom does not belong to the selected district. Please select valid options.")
       return
     }
 
@@ -239,12 +255,43 @@ function SetupPageContent() {
                   <Input value={formData.nationality} onChange={(e) => updateData({ nationality: e.target.value })} />
                 </Field>
                 <Field>
-                  <FieldLabel>District</FieldLabel>
-                  <Input value={formData.district} onChange={(e) => updateData({ district: e.target.value })} />
+                  <FieldLabel>District (Official List)</FieldLabel>
+                  <Select
+                    value={formData.district}
+                    onValueChange={(value) => {
+                      updateData({ district: value, chiefdom: "" })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your district" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OFFICIAL_DISTRICTS.map((district) => (
+                        <SelectItem key={district} value={district}>
+                          {district}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field>
-                  <FieldLabel>Chiefdom</FieldLabel>
-                  <Input value={formData.chiefdom} onChange={(e) => updateData({ chiefdom: e.target.value })} />
+                  <FieldLabel>Chiefdom (Official List)</FieldLabel>
+                  <Select
+                    value={formData.chiefdom}
+                    onValueChange={(value) => updateData({ chiefdom: value })}
+                    disabled={!formData.district}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={formData.district ? "Select your chiefdom" : "Select a district first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getChiefdomsForDistrict(formData.district).map((chiefdom) => (
+                        <SelectItem key={chiefdom} value={chiefdom}>
+                          {chiefdom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field>
                   <FieldLabel>Town / Village</FieldLabel>

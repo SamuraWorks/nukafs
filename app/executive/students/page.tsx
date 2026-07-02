@@ -337,7 +337,7 @@ export default function StudentManagementPage() {
             
             <div className="p-3 border-t bg-muted/20 text-[10px] text-muted-foreground flex justify-between font-semibold">
               <span>Showing {filteredStudents.length} of {students.length} students</span>
-              <span>NUKAFS Registry Office</span>
+              <span>NUKaFs Registry Office</span>
             </div>
           </Card>
         </div>

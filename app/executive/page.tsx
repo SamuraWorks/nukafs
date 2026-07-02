@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { 
   Users, 
@@ -39,8 +39,6 @@ import {
   Cell
 } from "recharts"
 
-import { membersByUniversity, membersByDistrict } from "@/lib/mock-data"
-
 export default function ExecutiveOverviewPage() {
   const { 
     students, 
@@ -64,6 +62,25 @@ export default function ExecutiveOverviewPage() {
   const pendingRegCount = pendingRegistrations.length
   const editRequestsCount = editRequests.filter(r => r.status === "pending").length
   const upcomingEventsCount = events.filter(e => e.status === "upcoming").length
+
+  // ── Live chart data derived from the real students array ────────────────────
+  const membersByUniversity = useMemo(() => {
+    const counts: Record<string, number> = {}
+    students.forEach(s => {
+      if (s.university) counts[s.university] = (counts[s.university] ?? 0) + 1
+    })
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name: name.split("(")[0].trim(), value }))
+      .sort((a, b) => b.value - a.value)
+  }, [students])
+
+  const membersByDistrict = useMemo(() => {
+    const counts: Record<string, number> = {}
+    students.forEach(s => {
+      if (s.district) counts[s.district] = (counts[s.district] ?? 0) + 1
+    })
+    return Object.entries(counts).map(([name, value]) => ({ name, value }))
+  }, [students])
 
   const handleAnnSubmit = (e: React.FormEvent) => {
     e.preventDefault()

@@ -37,7 +37,7 @@ export default function UniversitiesManagerPage() {
                 <TableHead className="font-bold text-xs">Campuses</TableHead>
                 <TableHead className="font-bold text-xs">Faculties</TableHead>
                 <TableHead className="font-bold text-xs">Departments</TableHead>
-                <TableHead className="font-bold text-xs text-right">NUKAFS Members</TableHead>
+                <TableHead className="font-bold text-xs text-right">NUKaFs Members</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

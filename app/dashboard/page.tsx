@@ -12,7 +12,9 @@ import {
   CheckCircle2, 
   AlertTriangle,
   ExternalLink,
-  GraduationCap
+  GraduationCap,
+  Clock,
+  QrCode
 } from "lucide-react"
 import { useAppState } from "@/lib/context/app-state-context"
 import { Button } from "@/components/ui/button"
@@ -27,6 +29,7 @@ export default function StudentDashboardPage() {
   const userDisplayName = currentUser?.fullName || "Student Member"
   const completionPercent = currentUser?.profileCompletion || 0
   const isComplete = completionPercent === 100
+  const isPending = currentUser?.status === "pending"
 
   // Filter recent data
   const recentAnnouncements = announcements.slice(0, 3)
@@ -40,6 +43,24 @@ export default function StudentDashboardPage() {
         description="Access and manage your student profile and resources here."
       />
 
+      {isPending && (
+        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/20">
+          <CardContent className="p-6 flex gap-4">
+            <Clock className="size-5 shrink-0 text-amber-600 dark:text-amber-400 mt-1" />
+            <div className="flex flex-col gap-2">
+              <p className="font-semibold text-amber-900 dark:text-amber-100">Awaiting Approval</p>
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Your registration has been successfully submitted and is awaiting approval by the NUKaFs Administration. Your QR Membership Verification Code will be generated automatically once your registration is approved.
+              </p>
+              <div className="flex items-center gap-2 mt-2 text-xs text-amber-700 dark:text-amber-300">
+                <QrCode className="size-3.5" />
+                <span>QR Code and Membership ID will be issued upon approval</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-6 md:grid-cols-12">
         {/* Profile Completion and Card status */}
         <Card className="md:col-span-8 bg-gradient-to-br from-card via-card to-primary/5 border">
@@ -52,7 +73,7 @@ export default function StudentDashboardPage() {
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {isComplete 
-                    ? "Your profile is fully setup and verified by NUKAFS Executives." 
+                    ? "Your profile is fully setup and verified by NUKaFs Executives." 
                     : "Please complete your registry setup to unlock all features."}
                 </p>
               </div>

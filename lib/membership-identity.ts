@@ -4,12 +4,12 @@
  */
 
 /**
- * Generate a membership ID in the format NUKAFS-000001
+ * Generate a membership ID in the format NUKaFs-000001
  * IDs auto-increment and are never reused
  */
 export function generateMembershipId(sequenceNumber: number): string {
   const paddedNumber = String(sequenceNumber).padStart(6, '0')
-  return `NUKAFS-${paddedNumber}`
+  return `NUKaFs-${paddedNumber}`
 }
 
 /**

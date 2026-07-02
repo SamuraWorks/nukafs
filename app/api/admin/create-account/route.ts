@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       },
     })
 
-    const temporaryPassword = process.env.SUPABASE_INITIAL_ADMIN_PASSWORD || "NUKAFS-Admin-123!"
+    const temporaryPassword = process.env.SUPABASE_INITIAL_ADMIN_PASSWORD || "NUKaFs-Admin-123!"
     const normalizedRole = normalizeRole(role || "executive")
     const loginUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000/login"
 
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     const message = [
       `Hello ${fullName},`,
       "",
-      "Your NUKAFS admin portal account has been created.",
+      "Your NUKaFs admin portal account has been created.",
       "",
       `Login URL: ${loginUrl}`,
       `Email: ${email}`,

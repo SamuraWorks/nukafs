@@ -39,7 +39,7 @@ function DetailRow({
 }
 
 function MemberAvatar({ member }: { member: VerifiedMemberProfile }) {
-  const initials = (member.fullName || "NUKAFS")
+  const initials = (member.fullName || "NUKaFs")
     .split(" ")
     .map((part) => part[0])
     .slice(0, 2)
@@ -96,14 +96,14 @@ export function VerificationProfile({ member }: VerificationProfileProps) {
                 {member.fullName}
               </h1>
               <p className="mt-1 font-mono text-sm text-[#9a7b1a]">
-                {member.membershipId} • {member.qrCodeValue}
+                {member.membershipId}
               </p>
             </div>
 
             <div className="hidden shrink-0 sm:block">
               <Image
                 src="/nukafs-logo.png"
-                alt="NUKAFS-SL"
+                alt="NUKaFs-SL"
                 width={56}
                 height={56}
                 className="rounded-full bg-white p-1 shadow-sm ring-1 ring-[#c9a227]/30"
@@ -123,7 +123,7 @@ export function VerificationProfile({ member }: VerificationProfileProps) {
           <dl>
             <DetailRow label="Full Name" value={member.fullName} />
             <DetailRow label="Membership ID" value={member.membershipId} highlight />
-            <DetailRow label="QR Code" value={member.qrCodeValue} highlight />
+            <DetailRow label="Verification Method" value="Public QR verification" />
             <DetailRow label="Membership Status" value={safeMembershipStatusLabel} />
             <DetailRow label="Current Role" value={member.currentRole} />
             <DetailRow
@@ -171,7 +171,7 @@ export function VerificationProfile({ member }: VerificationProfileProps) {
         </p>
         <p className="mt-1">
           &copy; {new Date().getFullYear()} National Union of Koinadugu and
-          Falaba Students (NUKAFS-SL). All rights reserved.
+          Falaba Students (NUKaFs-SL). All rights reserved.
         </p>
         <p className="mt-1 font-semibold text-[#0a1628]/70">
           Union Established: 1990s • Digital Registry Launch: 2026

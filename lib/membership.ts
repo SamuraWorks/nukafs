@@ -32,6 +32,7 @@ export interface VerifiedMemberProfile {
   cardSerialNumber: string
   isMigratedToDigitalRegistry: boolean
   legacyMembershipHistory: string
+  profilePhotoUrl?: string
 }
 
 const FACULTY_BY_DEPARTMENT: Record<string, string> = {
@@ -66,14 +67,14 @@ function pickValue<T>(source: Record<string, any> | undefined, keys: string[], f
 }
 
 function deriveCardSerial(membershipNumber: string): string {
-  const match = membershipNumber.match(/NUKAFS-(\d{4})-(\d+)/i)
+  const match = membershipNumber.match(/NUKaFs-(\d{4})-(\d+)/i)
   if (match) {
     const yearShort = match[1].slice(-2)
-    return `NUKAFS${yearShort}-${match[2]}`
+    return `NUKaFs${yearShort}-${match[2]}`
   }
   const digits = membershipNumber.replace(/\D/g, "")
   const suffix = digits.slice(-6).padStart(6, "0")
-  return `NUKAFS26-${suffix}`
+  return `NUKaFs26-${suffix}`
 }
 
 function deriveApprovalDate(joinedDate: string): string {
@@ -84,11 +85,11 @@ function deriveApprovalDate(joinedDate: string): string {
 }
 
 function formatMembershipId(sequence: number): string {
-  return `NUKAFS-${String(sequence).padStart(6, "0")}`
+  return `NUKaFs-${String(sequence).padStart(6, "0")}`
 }
 
 function formatQrCode(sequence: number): string {
-  return `NUKAFS-QR-${String(sequence).padStart(6, "0")}`
+  return `NUKaFs-QR-${String(sequence).padStart(6, "0")}`
 }
 
 export function createMembershipIdentity(
@@ -115,16 +116,22 @@ export function createMembershipIdentity(
 }
 
 export function memberToVerifiedProfile(user: any, role?: string): VerifiedMemberProfile {
-  const fullName = pickValue<string>(user, ["fullName", "full_name", "name"], "NUKAFS Member") ?? "NUKAFS Member"
+  const fullName = pickValue<string>(user, ["fullName", "full_name", "name"], "NUKaFs Member") ?? "NUKaFs Member"
   const membershipNumber =
-    pickValue<string>(user, ["membershipNumber", "membership_number", "staffId", "memberId", "membershipId", "id"], `NUKAFS-LEGACY-${String(user?.id || Math.floor(Math.random() * 1000000)).padStart(6, "0")}`) ?? `NUKAFS-LEGACY-${String(user?.id || Math.floor(Math.random() * 1000000)).padStart(6, "0")}`
+    pickValue<string>(user, ["membershipNumber", "membership_number", "staffId", "memberId", "membershipId", "id"], `NUKaFs-LEGACY-${String(user?.id || Math.floor(Math.random() * 1000000)).padStart(6, "0")}`) ?? `NUKaFs-LEGACY-${String(user?.id || Math.floor(Math.random() * 1000000)).padStart(6, "0")}`
   const membershipId =
     pickValue<string>(user, ["membershipId", "membership_id", "membershipNumber", "membership_number"], undefined) ||
     (typeof membershipNumber === "string"
-      ? `NUKAFS-${String(membershipNumber.replace(/\D/g, "")).slice(-6).padStart(6, "0")}`
-      : `NUKAFS-${String(Date.now()).slice(-6)}`)
-  const qrCodeValue =
-    pickValue<string>(user, ["qrCode", "qr_code", "qrCodeValue"], undefined) || `NUKAFS-QR-${String(membershipId.replace(/\D/g, "")).slice(-6).padStart(6, "0")}`
+      ? `NUKaFs-${String(membershipNumber.replace(/\D/g, "")).slice(-6).padStart(6, "0")}`
+      : `NUKaFs-${String(Date.now()).slice(-6)}`)
+  const qrCodeValue = (() => {
+    const stored = pickValue<string>(user, ["qrCode", "qr_code", "qrCodeValue"], undefined)
+    // If the stored value is already a full verification URL (from the new production system), use it directly
+    if (stored && /^https?:\/\//i.test(stored)) return stored
+    // Otherwise build a QR value from the membership ID
+    return stored || `NUKaFs-QR-${String(membershipId.replace(/\D/g, "")).slice(-6).padStart(6, "0")}`
+  })()
+  const profilePhotoUrl = pickValue<string>(user, ["profilePhotoUrl", "profile_photo_url", "profilePhoto", "profile_photo"], undefined)
   const dateIssued = pickValue<string>(user, ["dateIssued", "joinedDate", "createdAt", "date_issued"], new Date().toISOString().split("T")[0]) ?? new Date().toISOString().split("T")[0]
   const status = (pickValue<MembershipStatus>(user, ["status", "membershipStatus", "membership_status"], "active") ?? "active") as MembershipStatus
   const membershipType: MembershipType =
@@ -142,7 +149,7 @@ export function memberToVerifiedProfile(user: any, role?: string): VerifiedMembe
       ? "Super Admin"
       : "Student"
   const department = pickValue<string>(user, ["department", "title", "program"], "Registry Operations") ?? "Registry Operations"
-  const university = pickValue<string>(user, ["university", "organization", "institution"], "NUKAFS Secretariat") ?? "NUKAFS Secretariat"
+  const university = pickValue<string>(user, ["university", "organization", "institution"], "NUKaFs Secretariat") ?? "NUKaFs Secretariat"
   const faculty = pickValue<string>(user, ["faculty", "faculties"], undefined) ?? deriveFaculty(department)
 
   return {
@@ -167,12 +174,13 @@ export function memberToVerifiedProfile(user: any, role?: string): VerifiedMembe
     cardSerialNumber: deriveCardSerial(membershipNumber),
     isMigratedToDigitalRegistry: pickValue<boolean>(user, ["isMigratedToDigitalRegistry", "is_migrated_to_digital_registry"], false) ?? false,
     legacyMembershipHistory: pickValue<string>(user, ["legacyMembershipHistory", "legacy_membership_history"], "Registered in the digital registry") ?? "Registered in the digital registry",
+    profilePhotoUrl,
   }
 }
 
 export function studentToVerifiedProfile(student: Student): VerifiedMemberProfile {
-  const membershipId = student.membershipId ?? `NUKAFS-${String((Number(student.membershipNumber.replace(/\D/g, "")) % 1000000) || 1).padStart(6, "0")}`
-  const qrCodeValue = student.qrCode ?? `NUKAFS-QR-${membershipId.replace("NUKAFS-", "")}`
+  const membershipId = student.membershipId ?? `NUKaFs-${String((Number(student.membershipNumber.replace(/\D/g, "")) % 1000000) || 1).padStart(6, "0")}`
+  const qrCodeValue = student.qrCode ?? `NUKaFs-QR-${membershipId.replace("NUKaFs-", "")}`
   const dateIssued = student.dateIssued ?? deriveApprovalDate(student.joinedDate)
   const primaryStatus = student.qrCodeStatus === "revoked" || student.qrCodeStatus === "expired" ? "revoked" : student.status
 
@@ -198,6 +206,7 @@ export function studentToVerifiedProfile(student: Student): VerifiedMemberProfil
     cardSerialNumber: deriveCardSerial(student.membershipNumber),
     isMigratedToDigitalRegistry: student.isMigratedToDigitalRegistry ?? false,
     legacyMembershipHistory: student.legacyMembershipHistory ?? "Registered in the digital registry",
+    profilePhotoUrl: (student as any).profilePhotoUrl || (student as any).profilePhoto,
   }
 }
 
@@ -218,16 +227,22 @@ export function formatMembershipDate(date: string): string {
 }
 
 export function getVerifyUrl(membershipNumber: string, origin?: string): string {
+  const value = membershipNumber?.trim() ?? ""
+
+  if (/^https?:\/\//i.test(value)) {
+    return value
+  }
+
   const base =
     origin ??
     (typeof window !== "undefined"
       ? window.location.origin
-      : "https://registry.nukafs.org")
+      : "https://registry.nukafs-sl.org")
 
-  return `${base}/verify/${membershipNumber}`
+  return `${base}/verify/${value}`
 }
 
-export const NUKAFS_CONTACT = {
+export const NUKaFs_CONTACT = {
   website: "www.nukafs-sl.org",
   email: "registry@nukafs-sl.org",
   phone: "+232 76 000 000",

@@ -10,10 +10,10 @@ status: Complete & Production-Ready
 ## ✅ What Has Been Implemented
 
 ### Core System
-A complete, production-ready permanent digital identity system for NUKAFS Registry that:
+A complete, production-ready permanent digital identity system for NUKaFs Registry that:
 
 1. **Generates Sequential Membership IDs**
-   - Students & Graduates: NUKAFS-000001, NUKAFS-000002, ...
+   - Students & Graduates: NUKaFs-000001, NUKaFs-000002, ...
    - Stakeholders: STK-000001, STK-000002, ...
    - Never duplicated, never reused, never reassigned
 
@@ -111,7 +111,7 @@ A complete, production-ready permanent digital identity system for NUKAFS Regist
 ```
 ✅ scripts/bootstrap-membership-system.mjs
    └─ One-time setup script
-   └─ Assigns NUKAFS-000001 to Samuel
+   └─ Assigns NUKaFs-000001 to Samuel
    └─ Initializes counters
    └─ Creates audit log
    └─ 120 lines
@@ -157,7 +157,7 @@ Email:                  samuel540wisesamura@gmail.com
 Full Name:              Samuel Samura
 Membership Type:        Student (permanent, even as Super Admin)
 System Role:            Super Admin
-Membership ID:          NUKAFS-000001 ✓ PERMANENT
+Membership ID:          NUKaFs-000001 ✓ PERMANENT
 Verification Token:     [64-char hex] ✓ PERMANENT
 QR Code:                /verify/{token} ✓ PERMANENT
 Profile Photo:          [Uploaded from attachments]
@@ -243,7 +243,7 @@ Professional:
 6. Verify QR code works
 
 ### Short-term (This Week)
-1. Test with second user (should get NUKAFS-000002)
+1. Test with second user (should get NUKaFs-000002)
 2. Test stakeholder allocation (should get STK-000001)
 3. Verify all sync features work
 4. Test profile updates
@@ -442,7 +442,7 @@ QUICK_START.sh
 ║  Status:       READY FOR DEPLOYMENT                       ║
 ║  Version:      1.0 (Production-Ready)                     ║
 ║  Last Updated: 2026-06-28                                 ║
-║  First Member: Samuel Samura (NUKAFS-000001)              ║
+║  First Member: Samuel Samura (NUKaFs-000001)              ║
 ║  Capacity:     15,000+ users                              ║
 ║  Documentation: Complete (2,000+ lines)                   ║
 ║                                                            ║

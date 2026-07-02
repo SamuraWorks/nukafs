@@ -12,7 +12,7 @@ export default function ExecutiveTeamPage() {
     <div className="flex flex-col gap-6 font-sans pb-10 max-w-5xl mx-auto">
       <PageHeader
         title="Executive Team"
-        description="Directory of the NUKAFS executive committee."
+        description="Directory of the NUKaFs executive committee."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

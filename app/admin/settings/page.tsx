@@ -37,9 +37,9 @@ export default function SystemSettingsPage() {
   const [general, setGeneral] = useState({
     systemName: systemSettings.systemName,
     systemDescription: systemSettings.systemDescription,
-    supportEmail: "support@NUKAFS.org",
+    supportEmail: "support@NUKaFs.org",
     supportPhone: "+232 76 000 000",
-    website: "https://NUKAFS.org",
+    website: "https://NUKaFs.org",
   })
 
   const [registration, setRegistration] = useState({
@@ -223,7 +223,7 @@ export default function SystemSettingsPage() {
                     <Hash className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                     <Input className="pl-9 font-mono text-xs" value={registration.membershipNumberFormat} onChange={e => setRegistration({ ...registration, membershipNumberFormat: e.target.value })} />
                   </div>
-                  <p className="text-[10px] text-muted-foreground">Format: NUKAFS-YYYY-XXXX (XXXX = sequential number)</p>
+                  <p className="text-[10px] text-muted-foreground">Format: NUKaFs-YYYY-XXXX (XXXX = sequential number)</p>
                 </div>
               </div>
 
@@ -297,7 +297,7 @@ export default function SystemSettingsPage() {
 
               <div className="flex items-center justify-between border-t pt-4">
                 <div>
-                  <p className="text-sm font-semibold">Show NUKAFS Logo</p>
+                  <p className="text-sm font-semibold">Show NUKaFs Logo</p>
                   <p className="text-xs text-muted-foreground">Display the union logo in the sidebar and login page.</p>
                 </div>
                 <Switch checked={appearance.showLogo} onCheckedChange={v => setAppearance({ ...appearance, showLogo: v })} />
@@ -444,9 +444,9 @@ export default function SystemSettingsPage() {
                   { label: "Framework", value: "Next.js 15 (App Router)" },
                   { label: "Database", value: "Supabase (PostgreSQL)" },
                   { label: "Authentication", value: "Supabase Auth (JWT)" },
-                  { label: "License", value: "NUKAFS Internal Use Only" },
+                  { label: "License", value: "NUKaFs Internal Use Only" },
                   { label: "Last Update", value: "27 June 2026" },
-                  { label: "Developed By", value: "NUKAFS Tech Committee" },
+                  { label: "Developed By", value: "NUKaFs Tech Committee" },
                   { label: "Support Email", value: general.supportEmail },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex flex-col gap-0.5 border-b pb-3 last:border-0">

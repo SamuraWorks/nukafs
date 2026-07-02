@@ -30,10 +30,10 @@ const adminClient = createClient(SUPABASE_URL, SERVICE_KEY)
 
 function generateTemporaryPassword() {
   const suffix = Math.random().toString(36).slice(-8).toUpperCase()
-  return `NUKAFS-${suffix}!`
+  return `NUKaFs-${suffix}!`
 }
 
-const adminPassword = process.env.SUPABASE_INITIAL_ADMIN_PASSWORD || "NUKAFS-Admin-123!"
+const adminPassword = process.env.SUPABASE_INITIAL_ADMIN_PASSWORD || "NUKaFs-Admin-123!"
 
 async function createUser(payload) {
   return await adminClient.auth.admin.createUser({

@@ -28,11 +28,15 @@ export function MembershipQrCode({
   showLogo = true,
 }: MembershipQrCodeProps) {
   const identityValue = qrCodeValue?.trim() || membershipId?.trim() || membershipNumber
-  const [verifyUrl, setVerifyUrl] = useState(() => getVerifyUrl(identityValue))
+  const [verifyUrl, setVerifyUrl] = useState(() => {
+    const value = qrCodeValue?.trim()
+    return value && /^https?:\/\//i.test(value) ? value : getVerifyUrl(identityValue)
+  })
 
   useEffect(() => {
-    setVerifyUrl(getVerifyUrl(identityValue))
-  }, [identityValue])
+    const value = qrCodeValue?.trim()
+    setVerifyUrl(value && /^https?:\/\//i.test(value) ? value : getVerifyUrl(identityValue))
+  }, [qrCodeValue, identityValue])
 
   return (
     <div

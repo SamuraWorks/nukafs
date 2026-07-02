@@ -141,7 +141,7 @@ export default function UniversitiesManagerPage() {
       faculties: [],
       departments: [],
       courses: [],
-      description: "New institution added to the NUKAFS Registry.",
+      description: "New institution added to the NUKaFs Registry.",
     }
     setUnis(prev => [newUni, ...prev])
     setNewName("")
@@ -163,7 +163,7 @@ export default function UniversitiesManagerPage() {
     <div className="flex flex-col gap-6 font-sans pb-10 max-w-6xl mx-auto">
       <PageHeader
         title="Universities Manager"
-        description="Manage all institutions represented in the NUKAFS student registry."
+        description="Manage all institutions represented in the NUKaFs student registry."
         action={
           <Button onClick={() => setAddOpen(true)} className="gap-2">
             <Plus className="size-4" /> Add University
@@ -412,7 +412,7 @@ export default function UniversitiesManagerPage() {
         <DialogContent className="max-w-sm font-sans">
           <DialogHeader>
             <DialogTitle className="font-heading text-base">Add New University</DialogTitle>
-            <DialogDescription className="text-xs">Register a new institution in the NUKAFS Registry.</DialogDescription>
+            <DialogDescription className="text-xs">Register a new institution in the NUKaFs Registry.</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 pt-2">
             <div className="flex flex-col gap-1.5">

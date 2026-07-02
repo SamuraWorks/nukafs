@@ -59,6 +59,34 @@ export async function fetchAnnouncements() {
   return data ?? []
 }
 
+export async function fetchEvents() {
+  const supabaseClient = ensureSupabaseClient()
+  const { data, error } = await supabaseClient
+    .from("events")
+    .select("*")
+    .order("date", { ascending: false })
+
+  if (error) {
+    throw new Error(normalizeError(error) ?? "Failed to fetch events")
+  }
+
+  return data ?? []
+}
+
+export async function fetchOpportunities() {
+  const supabaseClient = ensureSupabaseClient()
+  const { data, error } = await supabaseClient
+    .from("opportunities")
+    .select("*")
+    .order("deadline", { ascending: true })
+
+  if (error) {
+    throw new Error(normalizeError(error) ?? "Failed to fetch opportunities")
+  }
+
+  return data ?? []
+}
+
 export async function fetchUniversities() {
   const supabaseClient = ensureSupabaseClient()
   const { data, error } = await supabaseClient
@@ -117,6 +145,28 @@ export async function fetchEditRequests() {
   }
 
   return data ?? []
+}
+
+export async function fetchRegistrySnapshot() {
+  const [students, pendingRegistrations, editRequests, announcements, events, opportunities, universities] = await Promise.all([
+    fetchStudents(1, 200).then((result) => result.data).catch(() => []),
+    fetchPendingRegistrations().catch(() => []),
+    fetchEditRequests().catch(() => []),
+    fetchAnnouncements().catch(() => []),
+    fetchEvents().catch(() => []),
+    fetchOpportunities().catch(() => []),
+    fetchUniversities().catch(() => []),
+  ])
+
+  return {
+    students,
+    pendingRegistrations,
+    editRequests,
+    announcements,
+    events,
+    opportunities,
+    universities,
+  }
 }
 
 export async function fetchStudentByIdentifier(identifier: string) {

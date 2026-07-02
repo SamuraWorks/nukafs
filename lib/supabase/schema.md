@@ -1,4 +1,4 @@
-# Supabase schema for NUKAFS Registry
+# Supabase schema for NUKaFs Registry
 
 ## Tables
 

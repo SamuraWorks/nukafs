@@ -107,8 +107,9 @@ export default function ExecutiveLayout({
         sections={execNavSections}
         user={{
           name: currentUser?.name || "Executive Member",
-          email: currentUser?.email || "exec@NUKAFS.org",
+          email: currentUser?.email || "exec@NUKaFs.org",
           roleLabel: `Executive: ${currentUser?.title || "Union Executive"}`,
+          profilePhotoUrl: currentUser?.profilePhotoUrl || currentUser?.profilePhoto,
         }}
         headerTitle="Executive Operations Center"
       >

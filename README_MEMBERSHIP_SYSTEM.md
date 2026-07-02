@@ -2,9 +2,9 @@
 
 ## Executive Summary
 
-A complete, production-ready permanent digital identity system for NUKAFS Registry supporting 15,000+ users with:
+A complete, production-ready permanent digital identity system for NUKaFs Registry supporting 15,000+ users with:
 
-- **Sequential Membership IDs** (NUKAFS-000001, NUKAFS-000002, etc.)
+- **Sequential Membership IDs** (NUKaFs-000001, NUKaFs-000002, etc.)
 - **Sequential Stakeholder IDs** (STK-000001, STK-000002, etc.)
 - **Permanent QR Codes** with secure verification tokens
 - **Profile Photo Management** via Supabase Cloud Storage
@@ -17,7 +17,7 @@ A complete, production-ready permanent digital identity system for NUKAFS Regist
 ## 📁 File Structure
 
 ```
-NUKAFS Registry Frontend/
+NUKaFs Registry Frontend/
 ├── 📋 MEMBERSHIP_SYSTEM_GUIDE.md          [Complete technical guide]
 ├── 📋 IMPLEMENTATION_SUMMARY.md           [Implementation overview]
 ├── 📋 QUICK_START.sh                      [Setup checklist]
@@ -130,7 +130,7 @@ node scripts/bootstrap-membership-system.mjs
 
 ### 1. **lib/membership-id-system.ts**
 ```typescript
-generateMembershipId(1)          // "NUKAFS-000001"
+generateMembershipId(1)          // "NUKaFs-000001"
 generateStakeholderId(1)         // "STK-000001"
 generateVerificationToken()      // "abc123...xyz" (64-char)
 generateQrCodeData(token)        // "https://.../verify/abc123..."
@@ -170,7 +170,7 @@ VerificationPage                 // QR code verification page
 ```
 Membership Type:    Student (permanent, even as Super Admin)
 System Role:        Super Admin (can change)
-Membership ID:      NUKAFS-000001 (permanent, permanent)
+Membership ID:      NUKaFs-000001 (permanent, permanent)
 Verification Token: [64-char hex] (permanent)
 QR Code:            /verify/{token} (permanent)
 ```
@@ -234,7 +234,7 @@ Skills:             Software Development
 CREATE TABLE membership_identities (
   id UUID PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id),
-  membership_id TEXT UNIQUE,           -- "NUKAFS-000001"
+  membership_id TEXT UNIQUE,           -- "NUKaFs-000001"
   membership_type TEXT,                -- "student" | "stakeholder"
   verification_token TEXT UNIQUE,      -- 64-char hex
   verification_url TEXT,               -- Full verification URL
@@ -276,13 +276,13 @@ Executive/Admin Approves
    ↓
 System calls: POST /api/membership-id
    ├─ Atomically increment counter
-   ├─ Generate ID (NUKAFS-000001)
+   ├─ Generate ID (NUKaFs-000001)
    ├─ Generate token (64-char hex)
    ├─ Create QR code URL
    └─ Store all permanently
    ↓
 Digital ID Card Created
-   ├─ Displays: NUKAFS-000001
+   ├─ Displays: NUKaFs-000001
    ├─ Shows QR code
    └─ Verification works forever
 ```
@@ -354,7 +354,7 @@ Display verification page
 - [ ] Test QR code scanning
 - [ ] Test verification page
 - [ ] Register second user
-- [ ] Verify gets NUKAFS-000002
+- [ ] Verify gets NUKaFs-000002
 - [ ] Check audit logs
 - [ ] Verify database state
 - [ ] Test stakeholder sequence
@@ -373,7 +373,7 @@ Display verification page
 ## 🚨 Important Notes
 
 ### Permanent Identity
-> Once NUKAFS-000001 is assigned to Samuel Samura, it is **PERMANENT** and **IMMUTABLE**. It will:
+> Once NUKaFs-000001 is assigned to Samuel Samura, it is **PERMANENT** and **IMMUTABLE**. It will:
 > - Never change
 > - Never be regenerated
 > - Never be reassigned
@@ -382,7 +382,7 @@ Display verification page
 
 ### Sequential Integrity
 > The system maintains two independent sequences:
-> - **Student/Graduate**: NUKAFS-000001, NUKAFS-000002, ... (shared sequence)
+> - **Student/Graduate**: NUKaFs-000001, NUKaFs-000002, ... (shared sequence)
 > - **Stakeholder**: STK-000001, STK-000002, ... (separate sequence)
 > 
 > Counters never decrement and are stored atomically to prevent race conditions.
@@ -435,11 +435,11 @@ Display verification page
 
 ### Common Issues
 
-**Q: How do I verify Samuel got NUKAFS-000001?**
+**Q: How do I verify Samuel got NUKaFs-000001?**
 A: Query the database:
 ```sql
-SELECT * FROM membership_identities WHERE membership_id = 'NUKAFS-000001';
-SELECT * FROM users WHERE membership_number = 'NUKAFS-000001';
+SELECT * FROM membership_identities WHERE membership_id = 'NUKaFs-000001';
+SELECT * FROM users WHERE membership_number = 'NUKaFs-000001';
 ```
 
 **Q: Can Membership IDs be changed?**
@@ -453,7 +453,7 @@ A: Check:
 4. Verification page is deployed
 
 **Q: How do I test next user?**
-A: Register and approve a new student. System automatically allocates NUKAFS-000002.
+A: Register and approve a new student. System automatically allocates NUKaFs-000002.
 
 **Q: Can I regenerate a QR code?**
 A: No. QR codes are permanent. If code is lost, the verification URL is still in the database.

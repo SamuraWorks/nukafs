@@ -12,12 +12,32 @@ export interface SupabaseUserProfile {
   course?: string
   department?: string
   level?: string
+  country?: string
   district?: string
   chiefdom?: string
+  town?: string
   employment_status?: string
   skills?: string[]
   scholarship_applicant?: boolean
   joined_date?: string
+  college?: string
+  expected_graduation_year?: string
+  organization?: string
+  campus?: string
+  faculty?: string
+  admission_year?: string
+  graduation_year?: string
+  occupation?: string
+  biography?: string
+  gender?: string
+  dob?: string
+  nationality?: string
+  home_address?: string
+  current_address?: string
+  student_id?: string
+  emergency_contact?: any
+  profile_photo?: string
+  profile_photo_url?: string
   avatar_color?: string
   qr_code?: string
   qr_code_status?: string
@@ -47,3 +67,21 @@ export interface SupabaseFetchResult<T> {
   data: T[]
   total: number
 }
+
+export interface SupabaseDistrict {
+  id: string
+  name: string
+  status: "active" | "inactive"
+  created_at?: string
+  updated_at?: string
+}
+
+export interface SupabaseChiefdom {
+  id: string
+  name: string
+  district_id: string
+  status: "active" | "inactive"
+  created_at?: string
+  updated_at?: string
+}
+

@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { PieChart, Download, BarChart3, Users, Building2 } from "lucide-react"
 import { PageHeader, StatCard } from "@/components/dashboard/ui-bits"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -18,7 +19,7 @@ import {
   Cell,
   Legend
 } from "recharts"
-import { membersByUniversity, membersByDepartment, membersByLevel, membersByDistrict } from "@/lib/mock-data"
+import { useAppState } from "@/lib/context/app-state-context"
 
 const COLORS = [
   "oklch(0.52 0.12 158)",
@@ -31,6 +32,33 @@ const COLORS = [
 ]
 
 export default function ExecutiveAnalyticsPage() {
+  const { students } = useAppState()
+
+  // ── Live chart data from the real students array ──────────────────────────
+  const membersByDistrict = useMemo(() => {
+    const counts: Record<string, number> = {}
+    students.forEach(s => { if (s.district) counts[s.district] = (counts[s.district] ?? 0) + 1 })
+    return Object.entries(counts).map(([name, value]) => ({ name, value }))
+  }, [students])
+
+  const membersByLevel = useMemo(() => {
+    const counts: Record<string, number> = {}
+    students.forEach(s => { if (s.level) counts[s.level] = (counts[s.level] ?? 0) + 1 })
+    const order = ["Year 1", "Year 2", "Year 3", "Year 4", "Postgraduate"]
+    return order
+      .filter(l => counts[l] !== undefined)
+      .map(name => ({ name, value: counts[name] }))
+      .concat(Object.entries(counts).filter(([n]) => !order.includes(n)).map(([name, value]) => ({ name, value })))
+  }, [students])
+
+  const membersByDepartment = useMemo(() => {
+    const counts: Record<string, number> = {}
+    students.forEach(s => { if (s.department) counts[s.department] = (counts[s.department] ?? 0) + 1 })
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+  }, [students])
+
   return (
     <div className="flex flex-col gap-6 font-sans pb-10 max-w-6xl mx-auto">
       <PageHeader

@@ -70,11 +70,11 @@ CREATE POLICY IF NOT EXISTS "Only service role can create identities" ON members
 FOR INSERT WITH CHECK (true);
 
 -- 5. Super Admin Account Setup
--- Assign NUKAFS-000001 to Samuel Samura permanently
+-- Assign NUKaFs-000001 to Samuel Samura permanently
 -- NOTE: Run this manually after creating Samuel's account
 /*
 UPDATE membership_identities
-SET membership_id = 'NUKAFS-000001'
+SET membership_id = 'NUKaFs-000001'
 WHERE user_id = (SELECT id FROM auth.users WHERE email = 'samuel540wisesamura@gmail.com')
 AND membership_type = 'student';
 

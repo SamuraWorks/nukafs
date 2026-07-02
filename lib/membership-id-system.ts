@@ -2,7 +2,7 @@
  * Production Membership ID & QR Code Generation System
  *
  * This module implements:
- * - Sequential Membership IDs (NUKAFS-000001, NUKAFS-000002, etc.)
+ * - Sequential Membership IDs (NUKaFs-000001, NUKaFs-000002, etc.)
  * - Sequential Stakeholder IDs (STK-000001, STK-000002, etc.)
  * - Permanent QR Codes with secure verification tokens
  * - Permanent identity for all users (never regenerated)
@@ -13,7 +13,7 @@ import crypto from "crypto"
 /**
  * Types
  */
-export type MembershipPrefix = "NUKAFS" | "STK"
+export type MembershipPrefix = "NUKaFs" | "STK"
 
 export interface MembershipIdentity {
   membershipId: string
@@ -29,14 +29,14 @@ export interface MembershipIdentity {
  * Generate next sequential Membership ID from counter
  * 
  * @param sequence - Sequential number from database counter (1, 2, 3...)
- * @returns Formatted membership ID like NUKAFS-000001
+ * @returns Formatted membership ID like NUKaFs-000001
  */
 export function generateMembershipId(sequence: number): string {
   if (sequence < 1) {
     throw new Error("Sequence number must be >= 1")
   }
   const padded = String(sequence).padStart(6, "0")
-  return `NUKAFS-${padded}`
+  return `NUKaFs-${padded}`
 }
 
 /**
@@ -152,7 +152,7 @@ export function formatMembershipDate(isoDate: string): string {
 
 /**
  * Build membership card serial number from membership ID
- * Example: NUKAFS-000042 -> NUKAFS26-000042
+ * Example: NUKaFs-000042 -> NUKaFs26-000042
  * 
  * @param membershipId - The membership ID
  * @returns Card serial number
@@ -161,9 +161,9 @@ export function buildCardSerial(membershipId: string): string {
   const year = new Date().getFullYear()
   const yearShort = String(year).slice(-2)
 
-  if (membershipId.startsWith("NUKAFS-")) {
-    const sequence = membershipId.replace("NUKAFS-", "")
-    return `NUKAFS${yearShort}-${sequence}`
+  if (membershipId.startsWith("NUKaFs-")) {
+    const sequence = membershipId.replace("NUKaFs-", "")
+    return `NUKaFs${yearShort}-${sequence}`
   }
 
   if (membershipId.startsWith("STK-")) {

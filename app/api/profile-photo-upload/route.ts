@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import { uploadToStorage, getSignedUrl } from "@/lib/supabase/storage-config"
+import { initializeStorageBuckets, uploadToStorage, getSignedUrl } from "@/lib/supabase/storage-config"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,13 +40,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    await initializeStorageBuckets(supabase)
+
     // Upload to profile-photos bucket
     const result = await uploadToStorage(
       supabase,
       "profile-photos",
       userId,
       file,
-      "profile.jpg"
+      file.name || "profile.jpg"
     )
 
     if (!result) {

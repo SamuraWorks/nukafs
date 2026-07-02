@@ -13,6 +13,7 @@ import {
   GraduationCap,
   FileBarChart,
   IdCard,
+  MapPin,
 } from "lucide-react"
 import { useAppState } from "@/lib/context/app-state-context"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
@@ -49,6 +50,11 @@ export default function AdminLayout({
     {
       label: "Registry & Core",
       items: [
+        {
+          title: "Geographic Registry",
+          href: "/admin/geography",
+          icon: MapPin,
+        },
         {
           title: "Universities Manager",
           href: "/admin/universities",
@@ -91,8 +97,9 @@ export default function AdminLayout({
         sections={navSections}
         user={{
           name: currentUser?.name || "Super Admin",
-          email: currentUser?.email || "president@NUKAFS.org",
+          email: currentUser?.email || "president@NUKaFs.org",
           roleLabel: "Super Administrator",
+          profilePhotoUrl: currentUser?.profilePhotoUrl || currentUser?.profilePhoto,
         }}
         headerTitle="Admin Panel"
       >

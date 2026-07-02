@@ -3,7 +3,7 @@
  * Manages sequential ID allocation and QR code generation
  * 
  * This endpoint coordinates:
- * - Membership ID sequences (NUKAFS-000001, NUKAFS-000002, etc.)
+ * - Membership ID sequences (NUKaFs-000001, NUKaFs-000002, etc.)
  * - Stakeholder ID sequences (STK-000001, STK-000002, etc.)
  * - Permanent verification tokens for QR codes
  * - One-time allocation (never regenerated after creation)
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         nextId:
           membershipType === "stakeholder"
             ? `STK-${String(counter).padStart(6, "0")}`
-            : `NUKAFS-${String(counter).padStart(6, "0")}`,
+            : `NUKaFs-${String(counter).padStart(6, "0")}`,
       })
     }
 
@@ -108,6 +108,7 @@ export async function GET(request: NextRequest) {
  * 
  * Called once when user account is approved for membership
  * Never called again - IDs are permanent
+ * Prevents regeneration on subsequent approvals or profile edits
  */
 export async function POST(request: NextRequest) {
   try {
@@ -119,6 +120,35 @@ export async function POST(request: NextRequest) {
         { error: "Missing userId" },
         { status: 400 }
       )
+    }
+
+    // SAFEGUARD: Check if this user already has a membership identity
+    // If yes, return existing identity instead of creating a new one
+    const { data: existingIdentity, error: existingError } = await supabase
+      .from("membership_identities")
+      .select("*")
+      .eq("user_id", userId)
+      .single()
+
+    if (!existingError || existingIdentity) {
+      // User already has an identity - return the existing one (permanent)
+      if (existingIdentity) {
+        return NextResponse.json(
+          {
+            success: true,
+            identity: {
+              membershipId: existingIdentity.membership_id,
+              verificationToken: existingIdentity.verification_token,
+              verificationUrl: existingIdentity.verification_url,
+              qrCodeData: existingIdentity.qr_code_data,
+              createdAt: existingIdentity.created_at,
+            },
+            isExisting: true,
+            message: "User already has a permanent membership identity",
+          },
+          { status: 200 }
+        )
+      }
     }
 
     // Use RPC function to atomically increment counter and get next ID

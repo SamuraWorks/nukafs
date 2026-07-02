@@ -14,9 +14,9 @@ import {
   User,
 } from "lucide-react"
 import { useState, type ReactNode } from "react"
-import { NUKAFSLogo } from "@/components/nukafs-logo"
+import { NUKaFsLogo } from "@/components/nukafs-logo"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -82,6 +82,7 @@ export interface DashboardUser {
   name: string
   email: string
   roleLabel: string
+  profilePhotoUrl?: string
 }
 
 function LogoutDialog({
@@ -97,7 +98,7 @@ function LogoutDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Sign out of NUKAFS Registry?</DialogTitle>
+          <DialogTitle>Sign out of NUKaFs Registry?</DialogTitle>
           <DialogDescription>
             You will be redirected to the login page. Your session will be cleared
             and protected pages will require signing in again.
@@ -164,7 +165,7 @@ export function DashboardShell({
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center px-2 py-1.5 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-            <NUKAFSLogo className="group-data-[collapsible=icon]:[&>div:last-child]:hidden" />
+            <NUKaFsLogo className="group-data-[collapsible=icon]:[&>div:last-child]:hidden" />
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -249,6 +250,9 @@ export function DashboardShell({
                   render={
                     <Button variant="ghost" className="gap-2 pl-1.5">
                       <Avatar className="size-7">
+                        {user.profilePhotoUrl ? (
+                          <AvatarImage src={user.profilePhotoUrl} alt={user.name} />
+                        ) : null}
                         <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
                           {initials}
                         </AvatarFallback>

@@ -45,10 +45,10 @@ export default function NotFound() {
           </Link>
         </div>
 
-        {/* NUKAFS branding */}
+        {/* NUKaFs branding */}
         <div className="mt-12 pt-6 border-t border-border">
           <p className="text-xs text-muted-foreground">
-            NUKAFS Registry — Koinadugu &amp; Falaba Students&apos; Union
+            NUKaFs Registry — Koinadugu &amp; Falaba Students&apos; Union
           </p>
         </div>
       </div>

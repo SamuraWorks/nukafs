@@ -71,7 +71,7 @@ export default function StudentDashboardLayout({
 
   const userDisplayName =
     currentUser?.fullName || currentUser?.name || "Student Member"
-  const userDisplayEmail = currentUser?.email || "student@NUKAFS.org"
+  const userDisplayEmail = currentUser?.email || "student@NUKaFs.org"
   const membershipNo = currentUser?.membershipNumber || "Pending Setup"
 
   return (
@@ -88,6 +88,7 @@ export default function StudentDashboardLayout({
           name: userDisplayName,
           email: userDisplayEmail,
           roleLabel: `Student (${membershipNo})`,
+          profilePhotoUrl: currentUser?.profilePhotoUrl || currentUser?.profilePhoto,
         }}
         headerTitle="Student Workspace"
       >

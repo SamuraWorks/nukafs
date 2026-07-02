@@ -30,7 +30,7 @@ import type { AuditEntry } from "@/lib/mock-data"
 // Extended mock log entries for richer audit demonstration
 const EXTENDED_LOGS: (AuditEntry & { role: string; module: string; ip: string; status: "success" | "failed" })[] = [
   { id: "log_ext_1", actor: "Fatmata Koroma", role: "Executive", action: "Approved student registration", target: "Sahr Mansaray", timestamp: "2024-09-03 14:22", type: "approve", module: "Registrations", ip: "197.220.124.12", status: "success" },
-  { id: "log_ext_2", actor: "Mohamed Sesay", role: "Executive", action: "Updated profile field (Phone)", target: "NUKAFS-2024-0412", timestamp: "2024-09-03 11:05", type: "update", module: "Student Management", ip: "197.220.125.88", status: "success" },
+  { id: "log_ext_2", actor: "Mohamed Sesay", role: "Executive", action: "Updated profile field (Phone)", target: "NUKaFs-2024-0412", timestamp: "2024-09-03 11:05", type: "update", module: "Student Management", ip: "197.220.125.88", status: "success" },
   { id: "log_ext_3", actor: "Alusine Bangura", role: "Super Admin", action: "Added executive team member", target: "Isatu Bah", timestamp: "2024-09-02 16:40", type: "create", module: "Team Members", ip: "197.220.124.9", status: "success" },
   { id: "log_ext_4", actor: "Fatmata Koroma", role: "Executive", action: "Rejected edit request", target: "REQ-3091", timestamp: "2024-09-02 09:18", type: "delete", module: "Approvals", ip: "197.220.124.12", status: "success" },
   { id: "log_ext_5", actor: "Isatu Bah", role: "Executive", action: "Signed in to portal", target: "Executive Dashboard", timestamp: "2024-09-02 08:55", type: "login", module: "Authentication", ip: "197.220.124.55", status: "success" },

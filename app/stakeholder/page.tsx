@@ -1,138 +1,113 @@
 "use client"
 
+import { useMemo } from "react"
 import {
   Users,
   CheckCircle2,
+  TrendingUp,
+  GraduationCap,
   Building2,
   BookOpen,
   MapPin,
+  BriefcaseBusiness,
   HeartHandshake,
-  Briefcase,
-  TrendingUp,
-  Award,
-  GraduationCap,
-  Bell,
-  Megaphone,
-  FileBarChart,
-  Calendar,
 } from "lucide-react"
+import { useAppState } from "@/lib/context/app-state-context"
 import { PageHeader, StatCard } from "@/components/dashboard/ui-bits"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 
 export default function StakeholderOverviewPage() {
+  const { students, opportunities } = useAppState()
+
+  const summary = useMemo(() => {
+    const totalMembers = students.length
+    const verifiedMembers = students.filter((student) => student.status === "active").length
+    const currentStudents = students.filter((student) => student.employmentStatus === "Student").length
+    const graduates = students.filter(
+      (student) => student.employmentStatus === "Employed" || student.employmentStatus === "Self-employed" || student.level === "Postgraduate",
+    ).length
+
+    const districtCounts = students.reduce<Record<string, number>>((acc, student) => {
+      acc[student.district] = (acc[student.district] ?? 0) + 1
+      return acc
+    }, {})
+
+    const universityCounts = students.reduce<Record<string, number>>((acc, student) => {
+      acc[student.university] = (acc[student.university] ?? 0) + 1
+      return acc
+    }, {})
+
+    const topDistrict = Object.entries(districtCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "N/A"
+    const topUniversity = Object.entries(universityCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "N/A"
+
+    return {
+      totalMembers,
+      verifiedMembers,
+      currentStudents,
+      graduates,
+      topDistrict,
+      topUniversity,
+      opportunitiesCount: opportunities.length,
+    }
+  }, [students, opportunities])
+
   return (
-    <div className="flex flex-col gap-6 font-sans pb-10 max-w-6xl mx-auto">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 pb-10 font-sans">
       <PageHeader
-        title="Executive Overview"
-        description="High-level summary of the NUKAFS student registry, identifying key metrics and support opportunities."
+        title="Dashboard"
+        description="Live executive summary of verified member activity, opportunities, and stakeholder-ready insights."
       />
 
-      {/* Primary Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Registered Students" value="2,480" icon={Users} trend="Active members" trendUp={true} hint="" />
-        <StatCard label="Verified Students" value="1,986" icon={CheckCircle2} trend="80% verification rate" trendUp={true} hint="" />
-        <StatCard label="New This Month" value="142" icon={TrendingUp} hint="Recent registrations" />
-        <StatCard label="Final-Year Students" value="340" icon={GraduationCap} hint="Graduating class" />
+        <StatCard label="Total Members" value={summary.totalMembers.toLocaleString()} icon={Users} trend="Production members" trendUp />
+        <StatCard label="Verified Members" value={summary.verifiedMembers.toLocaleString()} icon={CheckCircle2} trend="Active registry" trendUp />
+        <StatCard label="Current Students" value={summary.currentStudents.toLocaleString()} icon={GraduationCap} trend="Enrolled" />
+        <StatCard label="Graduates" value={summary.graduates.toLocaleString()} icon={BriefcaseBusiness} trend="Career-ready" />
       </div>
 
-      {/* Secondary Stats */}
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6 mt-2">
+      <div className="mt-2 grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {[
-          { label: "Universities", value: "7", icon: Building2 },
-          { label: "Faculties", value: "14", icon: BookOpen },
-          { label: "Departments", value: "40+", icon: MapPin },
-          { label: "Courses", value: "30+", icon: Award },
-          { label: "Entrepreneurs", value: "125", icon: TrendingUp },
-          { label: "Scholarship Req.", value: "396", icon: HeartHandshake },
-        ].map(s => (
+          { label: "Top District", value: summary.topDistrict, icon: MapPin },
+          { label: "Top University", value: summary.topUniversity, icon: Building2 },
+          { label: "Published Opportunities", value: summary.opportunitiesCount.toString(), icon: BriefcaseBusiness },
+          { label: "Verified Active", value: summary.verifiedMembers.toString(), icon: CheckCircle2 },
+          { label: "Academic Levels", value: "Multiple", icon: BookOpen },
+          { label: "Member Demand", value: "Live", icon: HeartHandshake },
+        ].map((s) => (
           <Card key={s.label} className="border shadow-xs">
-            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-              <s.icon className="size-5 text-primary mb-2 opacity-80" />
+            <CardContent className="flex flex-col items-center justify-center p-4 text-center">
+              <s.icon className="mb-2 size-5 text-primary opacity-80" />
               <p className="text-lg font-bold text-foreground">{s.value}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{s.label}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Insights & Activity */}
-      <div className="grid gap-6 md:grid-cols-12 mt-4">
-        
-        {/* Quick Insights */}
-        <Card className="md:col-span-8 border shadow-sm">
-          <CardHeader className="p-5 border-b">
-            <CardTitle className="text-base flex items-center gap-2">
-              <TrendingUp className="size-4 text-primary" /> Quick Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 divide-y divide-border">
-            {[
-              { title: "High Demand for Internships", desc: "420 students have requested internship opportunities, primarily in Engineering and Business sectors.", color: "text-amber-600", bg: "bg-amber-100" },
-              { title: "Growing Female Registration", desc: "Female student registration increased by 15% this academic year.", color: "text-emerald-600", bg: "bg-emerald-100" },
-              { title: "Northern Province Dominance", desc: "55% of the registry originates from the Northern Province, highlighting a strong regional base.", color: "text-blue-600", bg: "bg-blue-100" },
-            ].map((insight, i) => (
-              <div key={i} className="px-5 py-4 flex items-start gap-3">
-                <div className={`size-8 rounded-lg flex items-center justify-center shrink-0 ${insight.bg} ${insight.color}`}>
-                  <Lightbulb className="size-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{insight.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{insight.desc}</p>
-                </div>
-              </div>
-            ))}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="border shadow-sm">
+          <CardContent className="p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <TrendingUp className="size-4 text-primary" />
+              <h3 className="text-sm font-semibold">Live summary</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This dashboard reflects the production registry in real time, with member totals, status distribution, and opportunity counts sourced directly from the connected database.
+            </p>
           </CardContent>
         </Card>
-
-        {/* Support Opportunities */}
-        <Card className="md:col-span-4 border shadow-sm">
-          <CardHeader className="p-5 border-b">
-            <CardTitle className="text-base flex items-center gap-2">
-              <HeartHandshake className="size-4 text-primary" /> Support Opportunities
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-5 flex flex-col gap-4">
-            {[
-              { label: "Scholarships Needed", value: "396", percent: 65, color: "bg-emerald-500" },
-              { label: "Internships Requested", value: "420", percent: 75, color: "bg-amber-500" },
-              { label: "Employment Seeking", value: "280", percent: 40, color: "bg-blue-500" },
-            ].map(s => (
-              <div key={s.label} className="flex flex-col gap-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="font-semibold">{s.label}</span>
-                  <span className="text-muted-foreground font-mono">{s.value} requests</span>
-                </div>
-                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                  <div className={`h-full ${s.color}`} style={{ width: `${s.percent}%` }} />
-                </div>
-              </div>
-            ))}
+        <Card className="border shadow-sm">
+          <CardContent className="p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <HeartHandshake className="size-4 text-primary" />
+              <h3 className="text-sm font-semibold">Opportunity pipeline</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Stakeholders can monitor active opportunities, deadlines, and member demand without any administrative or approval workflow.
+            </p>
           </CardContent>
         </Card>
-
       </div>
     </div>
-  )
-}
-
-function Lightbulb(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5" />
-      <path d="M9 18h6" />
-      <path d="M10 22h4" />
-    </svg>
   )
 }

@@ -86,7 +86,7 @@ const REPORTS: ReportCard[] = [
     lastGenerated: "2024-09-01", category: "analytics"
   },
   {
-    id: "rpt_uni", title: "University Report", description: "Distribution of NUKAFS members across all affiliated universities, with campus-level statistics and trends.",
+    id: "rpt_uni", title: "University Report", description: "Distribution of NUKaFs members across all affiliated universities, with campus-level statistics and trends.",
     icon: GraduationCap, color: "text-amber-600 bg-amber-50 dark:bg-amber-950", stats: [{ label: "Universities", value: "7" }, { label: "Total Students", value: "2,480" }, { label: "Most Members", value: "FBC (620)" }],
     lastGenerated: "2024-09-03", category: "institutions"
   },
@@ -157,7 +157,7 @@ export default function PlatformReportsPage() {
     <div className="flex flex-col gap-6 font-sans pb-10 max-w-6xl mx-auto">
       <PageHeader
         title="Platform Reports"
-        description="Generate, preview, and export comprehensive reports on all aspects of the NUKAFS Registry."
+        description="Generate, preview, and export comprehensive reports on all aspects of the NUKaFs Registry."
       />
 
       {/* Filter Bar */}

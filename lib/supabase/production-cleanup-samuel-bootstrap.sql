@@ -1,7 +1,7 @@
 -- Production cleanup and permanent Samuel bootstrap
 -- Run this in Supabase SQL Editor with the service role.
 -- This script keeps only Samuel Samura's account, removes seeded demo/test data,
--- and bootstraps his permanent NUKAFS-000001 membership identity.
+-- and bootstraps his permanent NUKaFs-000001 membership identity.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -184,10 +184,10 @@ BEGIN
     created_at,
     updated_at
   )
-  SELECT samuel_id, 'NUKAFS-000001', 'student', vtoken, vurl, vurl, 'active', now(), now()
+  SELECT samuel_id, 'NUKaFs-000001', 'student', vtoken, vurl, vurl, 'active', now(), now()
   WHERE NOT EXISTS (
     SELECT 1 FROM membership_identities
-    WHERE user_id = samuel_id OR membership_id = 'NUKAFS-000001'
+    WHERE user_id = samuel_id OR membership_id = 'NUKaFs-000001'
   );
 
   IF EXISTS (
@@ -202,7 +202,7 @@ BEGIN
       role = 'super_admin',
       status = 'active',
       profile_completion = 100,
-      membership_number = 'NUKAFS-000001',
+      membership_number = 'NUKaFs-000001',
       membership_type = 'Student',
       membership_status = 'active',
       verification_status = 'Verified',
@@ -231,7 +231,7 @@ BEGIN
       phone = '+23279630777',
       role = 'super_admin',
       status = 'active',
-      membership_id = 'NUKAFS-000001',
+      membership_id = 'NUKaFs-000001',
       membership_qr_data = vurl,
       date_issued = CURRENT_DATE,
       is_demo = false
@@ -279,7 +279,7 @@ BEGIN
       samuel_id,
       samuel_full_name,
       'bootstrapped super admin profile',
-      'NUKAFS-000001',
+      'NUKaFs-000001',
       'system',
       'Membership',
       'success',

@@ -24,17 +24,17 @@ export interface SuperAdminSeedResult {
 
 function generateTemporaryPassword(): string {
   const suffix = Math.random().toString(36).slice(-8).toUpperCase()
-  return `NUKAFS-${suffix}!`
+  return `NUKaFs-${suffix}!`
 }
 
 function buildMembershipNumber(): string {
-  // Samuel Samura as first approved member gets NUKAFS-000001
-  return "NUKAFS-000001"
+  // Samuel Samura as first approved member gets NUKaFs-000001
+  return "NUKaFs-000001"
 }
 
 function buildQrCode(membershipNumber: string): string {
-  // Generate QR code from membership ID (e.g., NUKAFS-000001 -> NUKAFS-QR-000001)
-  return membershipNumber.replace("NUKAFS-", "NUKAFS-QR-")
+  // Generate QR code from membership ID (e.g., NUKaFs-000001 -> NUKaFs-QR-000001)
+  return membershipNumber.replace("NUKaFs-", "NUKaFs-QR-")
 }
 
 export async function createInitialSuperAdminSeed(

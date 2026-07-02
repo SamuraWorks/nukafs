@@ -122,7 +122,7 @@ export default function SettingsPage() {
   }
 
   const handleDeleteAccount = () => {
-    toast.error("Account deletion is managed by the Executive Council. Please contact registry@NUKAFS.org.")
+    toast.error("Account deletion is managed by the Executive Council. Please contact registry@NUKaFs.org.")
   }
 
   const toggleNotif = (key: keyof typeof notifications) => (v: boolean) =>
@@ -179,7 +179,7 @@ export default function SettingsPage() {
           checked={notifications.emailEvents}
           onChange={toggleNotif("emailEvents")}
           label="Email — Events"
-          description="Reminders for upcoming NUKAFS events and fairs."
+          description="Reminders for upcoming NUKaFs events and fairs."
         />
         <Toggle
           checked={notifications.smsUpdates}
@@ -273,7 +273,7 @@ export default function SettingsPage() {
           checked={privacy.allowAnalytics}
           onChange={togglePrivacy("allowAnalytics")}
           label="Allow Anonymous Analytics"
-          description="Help NUKAFS improve by contributing anonymised usage data."
+          description="Help NUKaFs improve by contributing anonymised usage data."
         />
         <div className="pt-3">
           <button

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   ShieldCheck,
   Users,
@@ -42,7 +42,16 @@ import {
   AreaChart,
   Area
 } from "recharts"
-import { registrationTrend, AuditEntry, Role } from "@/lib/mock-data"
+// Local type aliases — no longer importing mock data
+type Role = "student" | "executive" | "stakeholder" | "super_admin"
+interface AuditEntry {
+  id: string
+  actor: string
+  action: string
+  target: string
+  timestamp: string
+  type: "create" | "update" | "delete" | "approve" | "login"
+}
 
 const ROLE_BADGE: Record<Role, { label: string; color: string }> = {
   student: { label: "Student", color: "bg-muted text-muted-foreground" },
@@ -87,6 +96,25 @@ export default function AdminPage() {
   const pendingRegCount = pendingRegistrations.length
   const totalExecs = teamMembers.filter(m => m.role === "executive" && m.status === "active").length
   const totalStakeholders = teamMembers.filter(m => m.role === "stakeholder").length
+
+  // ── Live registration trend from real student joinedDate data ──────────────
+  const registrationTrend = useMemo(() => {
+    const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    const counts: Record<string, number> = {}
+    students.forEach(s => {
+      if (s.joinedDate) {
+        const d = new Date(s.joinedDate)
+        if (!isNaN(d.getTime())) {
+          const key = MONTHS[d.getMonth()]
+          counts[key] = (counts[key] ?? 0) + 1
+        }
+      }
+    })
+    // Return in month order, only months that have data
+    return MONTHS
+      .filter(m => counts[m] !== undefined)
+      .map(month => ({ month, members: counts[month] }))
+  }, [students])
 
   const filteredLog = auditLog.filter((entry) => {
     const matchSearch =

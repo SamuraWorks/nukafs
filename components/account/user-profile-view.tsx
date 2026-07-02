@@ -27,7 +27,7 @@ export function UserProfileView({
   const isStudent = currentRole.startsWith("student")
   const fullName = currentUser?.fullName || currentUser?.name || "Registry Member"
   const membershipId =
-    currentUser?.membershipNumber || currentUser?.staffId || "NUKAFS-STAFF-001"
+    currentUser?.membershipNumber || currentUser?.staffId || "NUKaFs-STAFF-001"
   const roleLabel =
     currentUser?.roleLabel ||
     currentUser?.title ||
@@ -52,7 +52,7 @@ export function UserProfileView({
     : [
         { label: "Email", value: currentUser?.email },
         { label: "Phone Number", value: currentUser?.phone || "+232 76 000 000" },
-        { label: "Organization", value: currentUser?.organization || "NUKAFS Secretariat" },
+        { label: "Organization", value: currentUser?.organization || "NUKaFs Secretariat" },
         { label: "Title", value: currentUser?.title || roleLabel },
         { label: "District", value: currentUser?.district || "Koinadugu & Falaba" },
         { label: "Department", value: currentUser?.department || "Executive Affairs" },

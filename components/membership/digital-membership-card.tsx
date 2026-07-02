@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils"
 import {
   formatMembershipDate,
-  NUKAFS_CONTACT,
+  NUKaFs_CONTACT,
   type VerifiedMemberProfile,
 } from "@/lib/membership"
 import { CARD_THEME } from "@/lib/membership-card-theme"
@@ -98,7 +98,7 @@ function HologramSeal() {
           className="mt-[0.2mm] font-bold uppercase"
           style={{ fontSize: "1.1mm", color: CARD_THEME.navy }}
         >
-          NUKAFS-SL
+          NUKaFs-SL
         </span>
       </div>
     </div>
@@ -122,13 +122,22 @@ function MemberPhoto({ member }: { member: VerifiedMemberProfile }) {
       }}
     >
       <div
-        className="flex h-full w-full items-center justify-center font-semibold text-white"
+        className="flex h-full w-full items-center justify-center font-semibold text-white relative overflow-hidden"
         style={{
           backgroundColor: member.avatarColor,
           fontSize: "4.2mm",
         }}
       >
-        {initials}
+        {member.profilePhotoUrl ? (
+          <Image
+            src={member.profilePhotoUrl}
+            alt={member.fullName}
+            fill
+            className="object-cover"
+          />
+        ) : (
+          initials
+        )}
       </div>
     </div>
   )
@@ -306,7 +315,7 @@ function CardFront({ member }: { member: VerifiedMemberProfile }) {
         >
           <Image
             src="/nukafs-logo.png"
-            alt="NUKAFS-SL"
+            alt="NUKaFs-SL"
             width={mmToPx(13)}
             height={mmToPx(13)}
             className="h-[88%] w-[88%] object-contain"
@@ -322,7 +331,7 @@ function CardFront({ member }: { member: VerifiedMemberProfile }) {
             <br />
             KOINADUGU AND FALABA STUDENTS
             <br />
-            (NUKAFS-SL)
+            (NUKaFs-SL)
           </p>
           <div className="mt-[0.8mm] flex w-full items-center justify-center gap-[1mm]">
             <div className="h-[0.18mm] w-[7mm]" style={{ background: CARD_THEME.gold }} />
@@ -489,8 +498,8 @@ function CardFront({ member }: { member: VerifiedMemberProfile }) {
             style={{ fontSize: "0.95mm" }}
           >
             THIS CARD IS THE PROPERTY OF National Union of Koinadugu and
-            Falaba Students (NUKAFS-SL). If found, please return to the
-            NUKAFS-SL Secretariat.
+            Falaba Students (NUKaFs-SL). If found, please return to the
+            NUKaFs-SL Secretariat.
           </p>
         </div>
       </div>
@@ -522,7 +531,7 @@ function CardBack({ member }: { member: VerifiedMemberProfile }) {
               style={{ width: "2.6mm", height: "2.6mm", color: CARD_THEME.gold }}
             />
             <p className="leading-snug text-white/90" style={{ fontSize: "1.65mm" }}>
-              This card is the official property of NUKAFS-SL. Unauthorized
+              This card is the official property of NUKaFs-SL. Unauthorized
               reproduction or misuse is prohibited.
             </p>
           </div>
@@ -549,7 +558,7 @@ function CardBack({ member }: { member: VerifiedMemberProfile }) {
               style={{ fontSize: "1.55mm" }}
             >
               Scan the QR code on the front to verify authenticity via the
-              official NUKAFS-SL registry.
+              official NUKaFs-SL registry.
             </p>
           </div>
 
@@ -565,9 +574,9 @@ function CardBack({ member }: { member: VerifiedMemberProfile }) {
               Official Contact
             </p>
             <div className="space-y-[0.55mm] text-white/78">
-              <p style={{ fontSize: "1.6mm" }}>{NUKAFS_CONTACT.website}</p>
-              <p style={{ fontSize: "1.6mm" }}>{NUKAFS_CONTACT.email}</p>
-              <p style={{ fontSize: "1.6mm" }}>{NUKAFS_CONTACT.phone}</p>
+              <p style={{ fontSize: "1.6mm" }}>{NUKaFs_CONTACT.website}</p>
+              <p style={{ fontSize: "1.6mm" }}>{NUKaFs_CONTACT.email}</p>
+              <p style={{ fontSize: "1.6mm" }}>{NUKaFs_CONTACT.phone}</p>
             </div>
           </div>
         </div>

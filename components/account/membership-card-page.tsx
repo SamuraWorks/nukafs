@@ -18,17 +18,17 @@ function staffToVerifiedProfile(user: {
   role?: string
   title?: string
 }): VerifiedMemberProfile {
-  const name = user.fullName || user.name || "NUKAFS Member"
-  const staffId = `NUKAFS-STAFF-${name.split(" ").map((p) => p[0]).join("")}`
+  const name = user.fullName || user.name || "NUKaFs Member"
+  const staffId = `NUKaFs-STAFF-${name.split(" ").map((p) => p[0]).join("")}`
   return {
     fullName: name,
     membershipNumber: staffId,
-    membershipId: `NUKAFS-STAFF-ID-${name.split(" ").map((p) => p[0]).join("")}`,
-    qrCodeValue: `NUKAFS-QR-STAFF-${name.split(" ").map((p) => p[0]).join("")}`,
+    membershipId: `NUKaFs-STAFF-ID-${name.split(" ").map((p) => p[0]).join("")}`,
+    qrCodeValue: `NUKaFs-QR-STAFF-${name.split(" ").map((p) => p[0]).join("")}`,
     membershipStatus: "active",
     qrCodeStatus: "active",
     membershipType: "Student",
-    university: "NUKAFS Secretariat",
+    university: "NUKaFs Secretariat",
     faculty: "Executive Affairs",
     department: user.title || "Registry Operations",
     course: user.role?.replace("_", " ") || "Staff Member",
@@ -46,7 +46,7 @@ function staffToVerifiedProfile(user: {
             ? "Stakeholder"
             : "Administrator",
     avatarColor: "oklch(0.45 0.12 158)",
-    cardSerialNumber: staffId.replace("NUKAFS-", "NUKAFS"),
+    cardSerialNumber: staffId.replace("NUKaFs-", "NUKaFs"),
     isMigratedToDigitalRegistry: false,
     legacyMembershipHistory: "Staff account"
   }
@@ -69,7 +69,12 @@ export function MembershipCardPageView({
     return memberToVerifiedProfile(currentUser as any, currentUser?.role)
   }, [currentUser])
 
-  const verifyUrl = `/verify/${encodeURIComponent(member?.membershipNumber ?? "")}`
+  // Use the stored permanent QR code URL from the database if available
+  // Falls back to constructing a verify URL from the membership number
+  const storedQrCode = (currentUser as any)?.qrCode || (currentUser as any)?.permanentQrCode
+  const verifyUrl = storedQrCode && /^https?:\/\//i.test(storedQrCode)
+    ? storedQrCode
+    : `/verify/${encodeURIComponent(member?.membershipNumber ?? "")}`
 
   const handleDownload = () => {
     setIsDownloading(true)

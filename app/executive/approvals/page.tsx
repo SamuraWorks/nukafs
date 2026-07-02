@@ -53,7 +53,7 @@ export default function RegistrationApprovalsPage() {
     <div className="flex flex-col gap-6 max-w-4xl mx-auto font-sans">
       <PageHeader 
         title="Pending Registrations"
-        description="Verify student identities and approve access requests for NUKAFS Registry."
+        description="Verify student identities and approve access requests for NUKaFs Registry."
       />
 
       <Card className="border shadow-sm overflow-hidden">

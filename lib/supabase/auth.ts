@@ -86,10 +86,19 @@ export function mapUserMetadataToRole(metadata: Record<string, unknown> | null):
 }
 
 function buildAuthenticatedUser(
-  authUser: { id: string; email?: string | null; phone?: string | null; user_metadata?: Record<string, unknown> | null },
+  authUser: {
+    id: string
+    email?: string | null
+    phone?: string | null
+    user_metadata?: Record<string, unknown> | null
+    app_metadata?: Record<string, unknown> | null
+  },
   profileRow?: Record<string, unknown> | null,
 ): any {
-  const metadata = (authUser.user_metadata ?? null) as Record<string, unknown> | null
+  const metadata = {
+    ...(authUser.user_metadata ?? {}),
+    ...(authUser.app_metadata ?? {}),
+  } as Record<string, unknown>
   const profileData = (profileRow ?? null) as Record<string, unknown> | null
   const fullName = normalizeString(
     profileData?.full_name ?? profileData?.fullName ?? metadata?.full_name ?? metadata?.fullName,
@@ -117,6 +126,11 @@ function buildAuthenticatedUser(
     membershipNumber: normalizeString(profileData?.membership_number),
     membership_number: normalizeString(profileData?.membership_number),
     membershipId: normalizeString(profileData?.membership_number),
+    verificationStatus: normalizeString(profileData?.verification_status),
+    membershipType: normalizeString(profileData?.membership_type),
+    dateApproved: normalizeString(profileData?.date_approved ?? profileData?.date_issued ?? profileData?.joined_date),
+    accountStatus: normalizeString(profileData?.account_status),
+    permanentQrCode: normalizeString(profileData?.permanent_qr_code ?? profileData?.qr_code),
     university: normalizeString(profileData?.university),
     faculty: normalizeString(profileData?.faculty),
     campus: normalizeString(profileData?.campus),
@@ -128,6 +142,7 @@ function buildAuthenticatedUser(
     district: normalizeString(profileData?.district),
     chiefdom: normalizeString(profileData?.chiefdom),
     town: normalizeString(profileData?.town),
+    college: normalizeString(profileData?.college),
     homeAddress: normalizeString(profileData?.home_address),
     currentAddress: normalizeString(profileData?.current_address),
     gender: normalizeString(profileData?.gender),
@@ -136,9 +151,11 @@ function buildAuthenticatedUser(
     studentId: normalizeString(profileData?.student_id),
     admissionYear: normalizeString(profileData?.admission_year),
     graduationYear: normalizeString(profileData?.graduation_year),
+    expectedGraduationYear: normalizeString(profileData?.expected_graduation_year),
     occupation: normalizeString(profileData?.occupation),
+    organization: normalizeString(profileData?.organization),
     biography: normalizeString(profileData?.biography),
-    emergencyContact: normalizeString(profileData?.emergency_contact),
+    emergencyContact: normalizeString(profileData?.emergency_contact) ?? profileData?.emergency_contact,
     employmentStatus: normalizeString(profileData?.employment_status),
     employment_status: normalizeString(profileData?.employment_status),
     skills: normalizeArray(profileData?.skills) ?? normalizeArray(metadata?.skills),
@@ -161,7 +178,13 @@ function buildAuthenticatedUser(
 }
 
 async function loadAuthenticatedUserProfile(
-  authUser: { id: string; email?: string | null; phone?: string | null; user_metadata?: Record<string, unknown> | null },
+  authUser: {
+    id: string
+    email?: string | null
+    phone?: string | null
+    user_metadata?: Record<string, unknown> | null
+    app_metadata?: Record<string, unknown> | null
+  },
 ): Promise<any> {
   const supabaseClient = ensureSupabaseClient()
 
@@ -181,7 +204,25 @@ async function loadAuthenticatedUserProfile(
       return buildAuthenticatedUser(authUser, existingProfile)
     }
 
-    const metadata = (authUser.user_metadata ?? null) as Record<string, unknown> | null
+    // Try to fetch via API to bypass RLS cache/policy issues in browser
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch(`/api/profile/me?userId=${authUser.id}`)
+        if (res.ok) {
+           const { user } = await res.json()
+           if (user) {
+             return buildAuthenticatedUser(authUser, user)
+           }
+        }
+      } catch (e) {
+        console.error("Fallback API fetch failed", e)
+      }
+    }
+
+    const metadata = {
+      ...(authUser.user_metadata ?? {}),
+      ...(authUser.app_metadata ?? {}),
+    } as Record<string, unknown>
 
     const { data: emailMatchedProfile, error: emailLookupError } = await supabaseClient
       .from("users")
@@ -277,7 +318,10 @@ export async function signInWithPassword(
     }
   }
 
-  const metadata = data.user.user_metadata as Record<string, unknown> | null
+  const metadata = {
+    ...(data.user.user_metadata ?? {}),
+    ...(data.user.app_metadata ?? {}),
+  } as Record<string, unknown>
   const user = await loadAuthenticatedUserProfile(data.user)
   const passwordChangeRequired = Boolean(user?.password_change_required ?? (metadata as any)?.password_change_required)
 
@@ -314,7 +358,7 @@ export async function signUpWithPassword(
       data: {
         full_name: fullName,
         phone,
-        role: "student_pending",
+        role: "student_active_wizard",
         status: "pending",
         profile_completion: 0,
       },
@@ -335,7 +379,7 @@ export async function signUpWithPassword(
     user_metadata: {
       full_name: fullName,
       phone,
-      role: "student_pending",
+      role: "student_active_wizard",
       status: "pending",
       profile_completion: 0,
     },
@@ -344,7 +388,7 @@ export async function signUpWithPassword(
   return {
     success: true,
     user,
-    role: "student_pending",
+    role: "student_active_wizard",
   }
 }
 
@@ -384,9 +428,13 @@ export async function getCurrentSession(): Promise<{
   }
 
   const user = await loadAuthenticatedUserProfile(activeSession.user)
+  const mergedMetadata = {
+    ...((activeSession.user.user_metadata ?? {}) as Record<string, unknown>),
+    ...((activeSession.user.app_metadata ?? {}) as Record<string, unknown>),
+  }
   const resolvedRole =
     normalizeString(user?.role) ??
-    normalizeString((activeSession.user.user_metadata as Record<string, unknown> | null)?.role) ??
+    normalizeString(mergedMetadata?.role) ??
     "student_pending"
 
   return {

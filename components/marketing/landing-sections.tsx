@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 // Use a small static marketing FAQ/testimonial set instead of demo mock-data
 const faqs = [
-  { question: "What is NUKAFS Registry?", answer: "A verified registry for students from Koinadugu & Falaba districts." },
+  { question: "What is NUKaFs Registry?", answer: "A verified registry for students from Koinadugu & Falaba districts." },
   { question: "Who can join?", answer: "Any student originally from Koinadugu or Falaba studying at a recognised institution." },
 ]
 
@@ -129,13 +129,13 @@ export function About() {
       <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
         <div className="flex flex-col gap-5">
           <Badge variant="secondary" className="w-fit">
-            About NUKAFS Registry
+            About NUKaFs Registry
           </Badge>
           <h2 className="font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl">
             A trusted home for students from two districts, one union
           </h2>
           <p className="leading-relaxed text-muted-foreground text-pretty">
-            The NUKAFS Registry is the official information system of the Koinadugu &amp; Falaba Students&apos; Union. We
+            The NUKaFs Registry is the official information system of the Koinadugu &amp; Falaba Students&apos; Union. We
             bring together students from across every university in Sierra Leone who hail from our two home districts —
             so we can track our growth, celebrate our achievements, and connect every member to opportunity.
           </p>
@@ -332,7 +332,7 @@ export function Contact() {
             Questions about membership, approvals or opportunities? Send us a message and an executive will respond.
           </p>
           <div className="flex flex-col gap-3 text-sm">
-            <p><span className="font-medium">Email:</span> registry@NUKAFS.org</p>
+            <p><span className="font-medium">Email:</span> registry@NUKaFs.org</p>
             <p><span className="font-medium">Phone:</span> +232 76 000 000</p>
             <p><span className="font-medium">Office:</span> Kabala, Koinadugu District, Sierra Leone</p>
           </div>

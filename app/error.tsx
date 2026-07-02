@@ -63,12 +63,12 @@ export default function Error({
           </Link>
         </div>
 
-        {/* NUKAFS branding */}
+        {/* NUKaFs branding */}
         <div className="mt-12 pt-6 border-t border-border">
           <p className="text-xs text-muted-foreground">
-            NUKAFS Registry — If this error persists, contact{" "}
-            <a href="mailto:support@NUKAFS.org" className="text-primary underline">
-              support@NUKAFS.org
+            NUKaFs Registry — If this error persists, contact{" "}
+            <a href="mailto:support@NUKaFs.org" className="text-primary underline">
+              support@NUKaFs.org
             </a>
           </p>
         </div>

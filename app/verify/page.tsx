@@ -163,7 +163,7 @@ export default function VerifyMembershipPage() {
                 </div>
 
                 <div className="w-full bg-green-100 dark:bg-green-900/30 rounded-lg p-3 text-xs text-green-900 dark:text-green-100">
-                  <p className="font-semibold">✓ This is a verified NUKAFS member</p>
+                  <p className="font-semibold">✓ This is a verified NUKaFs member</p>
                 </div>
               </div>
             </CardContent>
@@ -173,7 +173,7 @@ export default function VerifyMembershipPage() {
             <CardContent className="p-8 text-center">
               <AlertCircle className="size-12 text-yellow-500 mx-auto mb-4" />
               <h2 className="font-heading text-2xl font-bold mb-2">No Data Provided</h2>
-              <p className="text-sm text-muted-foreground">Please scan a valid NUKAFS membership QR code</p>
+              <p className="text-sm text-muted-foreground">Please scan a valid NUKaFs membership QR code</p>
             </CardContent>
           </Card>
         )}

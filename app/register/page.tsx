@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { NUKAFSLogo } from "@/components/nukafs-logo"
+import { NUKaFsLogo } from "@/components/nukafs-logo"
 import { toast } from "sonner"
 import {
   validateRegistrationForm,
@@ -79,8 +79,8 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 font-sans">
       <div className="mb-6 flex flex-col items-center">
-        <Link href="/" aria-label="NUKAFS Registry Home">
-          <NUKAFSLogo className="scale-110 mb-2" />
+        <Link href="/" aria-label="NUKaFs Registry Home">
+          <NUKaFsLogo className="scale-110 mb-2" />
         </Link>
       </div>
       
@@ -89,7 +89,7 @@ export default function RegisterPage() {
           <div className="flex flex-col gap-2 pb-6">
             <h2 className="font-heading text-2xl font-bold tracking-tight">Create Account</h2>
             <p className="text-sm text-muted-foreground">
-              Enter your details to begin the NUKAFS Registry sign-up process.
+              Enter your details to begin the NUKaFs Registry sign-up process.
             </p>
           </div>
 

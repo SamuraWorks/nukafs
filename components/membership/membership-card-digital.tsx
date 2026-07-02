@@ -41,7 +41,7 @@ export function DigitalMembershipCard({
         <div className="bg-blue-900 px-6 py-4 border-b-2 border-yellow-400">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-blue-100">NUKAFS</h2>
+              <h2 className="text-sm font-semibold text-blue-100">NUKaFs</h2>
               <p className="text-xs text-blue-200">Membership Card</p>
             </div>
             <div className="text-yellow-400 font-bold text-2xl">✓</div>

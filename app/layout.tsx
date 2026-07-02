@@ -24,9 +24,9 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "NUKAFS Registry — National Union of Koinadugu and Falaba Students (NUKAFS-SL)",
+  title: "NUKaFs Registry — National Union of Koinadugu and Falaba Students (NUKaFs-SL)",
   description:
-    "The official membership registry and information system for the National Union of Koinadugu and Falaba Students (NUKAFS-SL). Register, manage your profile, access scholarships, internships and more.",
+    "The official membership registry and information system for the National Union of Koinadugu and Falaba Students (NUKaFs-SL). Register, manage your profile, access scholarships, internships and more.",
   generator: "v0.app",
 }
 

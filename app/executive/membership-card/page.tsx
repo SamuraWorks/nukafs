@@ -4,7 +4,7 @@ export default function ExecutiveMembershipCardPage() {
   return (
     <MembershipCardPageView
       title="Executive Membership Card"
-      description="Your official NUKAFS executive identification card with QR verification."
+      description="Your official NUKaFs executive identification card with QR verification."
     />
   )
 }

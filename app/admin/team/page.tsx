@@ -208,7 +208,7 @@ export default function TeamPage() {
     <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto">
       <PageHeader
         title="Team Access Manager"
-        description="Manage executive and stakeholder access to the NUKAFS Registry admin portal."
+        description="Manage executive and stakeholder access to the NUKaFs Registry admin portal."
         action={
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => { setCreateForm({ fullName: "", email: "", role: "executive", title: "" }); setCreatedMessage(""); setCreateOpen(true) }} className="gap-2">
@@ -343,7 +343,7 @@ export default function TeamPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium">Email Address <span className="text-destructive">*</span></label>
-              <Input type="email" placeholder="e.g. aminata@NUKAFS.org" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} />
+              <Input type="email" placeholder="e.g. aminata@NUKaFs.org" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium">Role</label>
@@ -389,7 +389,7 @@ export default function TeamPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium">Email Address <span className="text-destructive">*</span></label>
-              <Input type="email" placeholder="e.g. aminata@NUKAFS.org" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Input type="email" placeholder="e.g. aminata@NUKaFs.org" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium">Role <span className="text-destructive">*</span></label>

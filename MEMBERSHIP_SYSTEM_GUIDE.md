@@ -2,15 +2,15 @@
  * Implementation Guide: Production Membership ID & QR Code System
  * 
  * This document outlines the complete production-ready system for managing
- * permanent membership identities across NUKAFS Registry.
+ * permanent membership identities across NUKaFs Registry.
  */
 
 # Membership ID & QR Code System - Implementation Guide
 
 ## Overview
 
-This system implements a permanent digital identity system for NUKAFS members:
-- **Students & Graduates**: Sequential IDs (NUKAFS-000001, NUKAFS-000002, etc.)
+This system implements a permanent digital identity system for NUKaFs members:
+- **Students & Graduates**: Sequential IDs (NUKaFs-000001, NUKaFs-000002, etc.)
 - **Stakeholders**: Separate sequential IDs (STK-000001, STK-000002, etc.)
 - **Permanent Identities**: Never regenerated, never reassigned, never duplicated
 - **Secure QR Codes**: Encode verification tokens, not membership IDs
@@ -22,7 +22,7 @@ This system implements a permanent digital identity system for NUKAFS members:
 ### 1. **Membership ID Generation** (`lib/membership-id-system.ts`)
 
 Production-ready functions for:
-- `generateMembershipId(sequence)` → "NUKAFS-000001"
+- `generateMembershipId(sequence)` → "NUKaFs-000001"
 - `generateStakeholderId(sequence)` → "STK-000001"
 - `generateVerificationToken()` → 64-character hex token
 - `generateQrCodeData(token)` → Verification URL
@@ -75,7 +75,7 @@ All files:
 CREATE TABLE membership_identities (
   id UUID PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id),
-  membership_id TEXT UNIQUE,           -- "NUKAFS-000001"
+  membership_id TEXT UNIQUE,           -- "NUKaFs-000001"
   membership_type TEXT,                 -- "student" or "stakeholder"
   verification_token TEXT UNIQUE,       -- 64-char hex
   verification_url TEXT,                -- https://.../ verify/{token}
@@ -119,14 +119,14 @@ ALTER TABLE users ADD COLUMN
 3. System calls POST /api/membership-id
    ├─ Gets next available sequence from system_config
    ├─ Increments counter atomically
-   ├─ Generates membership ID (NUKAFS-000001, etc.)
+   ├─ Generates membership ID (NUKaFs-000001, etc.)
    ├─ Generates cryptographic verification token
    ├─ Creates QR code data (verification URL)
    ├─ Stores all in membership_identities table
    └─ Updates users table with membership_id
    ↓
 4. User receives Digital ID Card with QR code
-   ├─ Displays Membership ID: NUKAFS-000001
+   ├─ Displays Membership ID: NUKaFs-000001
    ├─ Shows QR code
    └─ Links to verification page
    ↓
@@ -175,7 +175,7 @@ System automatically syncs across all pages
    ├─ Returns membership_id and user info
    └─ Returns success if found
    ↓
-4. Page calls GET /api/member-details?membershipId=NUKAFS-000001
+4. Page calls GET /api/member-details?membershipId=NUKaFs-000001
    ├─ Retrieves public member info
    ├─ Gets signed photo URL
    └─ Displays verified profile
@@ -192,7 +192,7 @@ System automatically syncs across all pages
 
 ---
 
-## Samuel Samura: First Member (NUKAFS-000001)
+## Samuel Samura: First Member (NUKaFs-000001)
 
 ### Setup Process
 
@@ -206,7 +206,7 @@ System automatically syncs across all pages
    node scripts/bootstrap-membership-system.mjs
    ```
    - Finds Samuel's account
-   - Assigns NUKAFS-000001
+   - Assigns NUKaFs-000001
    - Sets student_membership_counter to 2
    - Creates audit log
    - Outputs verification details
@@ -223,7 +223,7 @@ System automatically syncs across all pages
 ### Permanent System Identity
 
 ```
-Membership ID:        NUKAFS-000001  (PERMANENT)
+Membership ID:        NUKaFs-000001  (PERMANENT)
 Membership Type:      Student        (PERMANENT)
 System Role:          Super Admin    (CAN CHANGE)
 Verification Token:   [64-char hex]  (PERMANENT)
@@ -250,12 +250,12 @@ Profile Fields (EDITABLE):
 ### When Samuel is promoted to Executive/Admin/Super Admin
 
 ```
-Student with NUKAFS-000001 (Super Admin wants to add "Executive" role)
+Student with NUKaFs-000001 (Super Admin wants to add "Executive" role)
    ↓
 UPDATE users SET role = 'super_admin' WHERE id = samuel.id
    ↓
 Identity UNCHANGED:
-   ✓ Membership ID: NUKAFS-000001 (unchanged)
+   ✓ Membership ID: NUKaFs-000001 (unchanged)
    ✓ QR Code: /verify/... (unchanged)
    ✓ Digital ID Card: /verify/... (unchanged)
    ✓ Profile: /verify/... (unchanged)
@@ -274,20 +274,20 @@ ONLY CHANGED:
 
 ## Future Members
 
-### Next Student (NUKAFS-000002)
+### Next Student (NUKaFs-000002)
 
 When second student is approved:
 
 ```
 System retrieves counter: student_membership_counter.next = 2
    ↓
-Generate ID: NUKAFS-000002
+Generate ID: NUKaFs-000002
 Generate token & QR code
 Create identity record
 Increment counter to 3
 ```
 
-Result: NUKAFS-000002, NUKAFS-000003, etc. (continuous sequence)
+Result: NUKaFs-000002, NUKaFs-000003, etc. (continuous sequence)
 
 ### Stakeholder (STK-000001)
 
@@ -321,14 +321,14 @@ Result: STK-000001, STK-000002, etc. (independent sequence)
 
 ## Testing Checklist
 
-- [ ] Bootstrap script successfully assigns NUKAFS-000001 to Samuel
+- [ ] Bootstrap script successfully assigns NUKaFs-000001 to Samuel
 - [ ] Profile photo uploads correctly
 - [ ] Profile editor syncs across all pages immediately
 - [ ] QR code generation produces valid verification URL
 - [ ] QR code scanning displays verification page correctly
 - [ ] Member details show all profile information
 - [ ] Photo signed URLs don't expose internal paths
-- [ ] Second user receives NUKAFS-000002
+- [ ] Second user receives NUKaFs-000002
 - [ ] Stakeholder receives STK-000001 (independent sequence)
 - [ ] Counter never decrements or resets
 - [ ] Promotion workflow preserves membership ID

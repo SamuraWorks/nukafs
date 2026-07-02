@@ -4,7 +4,7 @@
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                         NUKAFS Registry Frontend                          │
+│                         NUKaFs Registry Frontend                          │
 │                      (Next.js 16 + React 19 + TypeScript)                 │
 └──────────────────────────────────────────────────────────────────────────┘
                                       │
@@ -88,7 +88,7 @@
 │    student_membership_counter.next=2 │
 │                                       │
 │ 3. Generate membership ID            │
-│    NUKAFS-000001                     │
+│    NUKaFs-000001                     │
 │                                       │
 │ 4. Generate verification token       │
 │    abc123def456... (64-char hex)     │
@@ -100,7 +100,7 @@
 │    (permanent, never changes)        │
 │                                       │
 │ 7. Update users.membership_number    │
-│    to NUKAFS-000001                  │
+│    to NUKaFs-000001                  │
 │                                       │
 │ 8. Return identity to frontend       │
 └──────────┬───────────────────────────┘
@@ -109,7 +109,7 @@
 ┌──────────────────────┐
 │ Digital ID Card      │
 │ Generated & Printed  │
-│ Shows NUKAFS-000001  │
+│ Shows NUKaFs-000001  │
 │ Shows QR Code        │
 └──────────┬───────────┘
            │
@@ -211,7 +211,7 @@
 │    WHERE verification_token = token  │
 │                                       │
 │ 3. Return membership_id              │
-│    (NUKAFS-000001)                   │
+│    (NUKaFs-000001)                   │
 │                                       │
 │ 4. Return success + metadata         │
 └──────────┬───────────────────────────┘
@@ -219,7 +219,7 @@
            ▼
 ┌──────────────────────────────────────┐
 │ GET /api/member-details              │
-│ ?membershipId=NUKAFS-000001          │
+│ ?membershipId=NUKaFs-000001          │
 ├──────────────────────────────────────┤
 │ 1. Look up user by membership_id     │
 │    SELECT * FROM users               │
@@ -250,7 +250,7 @@
 │ │ ✓ Verified                       │ │
 │ │                                  │ │
 │ │ [Profile Photo]  Name            │ │
-│ │                  NUKAFS-000001   │ │
+│ │                  NUKaFs-000001   │ │
 │ │                                  │ │
 │ │ University: Fourah Bay College   │ │
 │ │ Department: Electrical Eng.      │ │
@@ -293,7 +293,7 @@
 │ - ... [all editable fields]          │
 │                                       │
 │ [PERMANENT FIELDS - READ ONLY]       │
-│ Membership ID: NUKAFS-000001         │
+│ Membership ID: NUKaFs-000001         │
 │ QR Code: Active                      │
 │ Registration: 28 JUN 2026            │
 │ Approval: 28 JUN 2026                │
@@ -384,7 +384,7 @@
 │ • email                            │
 │ • phone                            │
 │ • membership_number (UNIQUE)       │──┐
-│   (e.g., "NUKAFS-000001")          │  │
+│   (e.g., "NUKaFs-000001")          │  │
 │ • profile_photo (storage path)     │  │
 │ • university                       │  │
 │ • department                       │  │
@@ -409,7 +409,7 @@
 │ • id (PK)                          │ │
 │ • user_id (FK → auth.users)        │ │
 │ • membership_id (UNIQUE) ◄─────────┤─┘
-│   (e.g., "NUKAFS-000001")          │   (linked to users table)
+│   (e.g., "NUKaFs-000001")          │   (linked to users table)
 │ • membership_type                  │
 │   ("student" | "stakeholder")      │
 │ • verification_token (UNIQUE)      │
@@ -652,7 +652,7 @@ User State Progression
        ▼
 ┌──────────────────────────┐
 │  MEMBERSHIP ACTIVE       │
-│  ✓ NUKAFS-000001        │
+│  ✓ NUKaFs-000001        │
 │  ✓ Verification Token    │
 │  ✓ QR Code Active        │
 │  ✓ Digital ID Card       │

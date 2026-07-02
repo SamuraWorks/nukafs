@@ -10,7 +10,8 @@ import { PageLoading, ErrorState } from "@/components/shared/page-states"
 
 export default function VerifyMembershipPage() {
   const params = useParams()
-  const membershipId = params.id as string
+  // The URL segment could be a 64-char hex token or a legacy membership ID
+  const id = params.id as string
 
   const [isLoading, setIsLoading] = useState(true)
   const [member, setMember] = useState<VerifiedMemberProfile | null>(null)
@@ -19,7 +20,10 @@ export default function VerifyMembershipPage() {
     let cancelled = false
 
     const loadMember = async () => {
-      const profile = await memberService.verifyMembership(membershipId)
+      // memberService.verifyMembership handles both:
+      // 1. A 64-char hex token (secure QR codes) → looks up membership_identities table
+      // 2. A legacy membership ID → looks up users table directly
+      const profile = await memberService.verifyMembership(id)
       if (!cancelled) {
         setMember(profile)
         setIsLoading(false)
@@ -28,13 +32,13 @@ export default function VerifyMembershipPage() {
 
     const timer = setTimeout(() => {
       void loadMember()
-    }, 800)
+    }, 600)
 
     return () => {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [membershipId])
+  }, [id])
 
   if (isLoading) {
     return (
@@ -50,12 +54,12 @@ export default function VerifyMembershipPage() {
         <div className="w-full max-w-md">
           <ErrorState
             title="Verification Failed"
-            description={`This membership could not be verified. The QR code or membership identifier ${membershipId} is invalid, expired, revoked, or no longer active.`}
+            description="This membership could not be verified. The QR code or verification link is invalid, expired, revoked, or no longer active."
             onRetry={() => {
               setIsLoading(true)
               setTimeout(() => {
                 void (async () => {
-                  const profile = await memberService.verifyMembership(membershipId)
+                  const profile = await memberService.verifyMembership(id)
                   setMember(profile)
                   setIsLoading(false)
                 })()

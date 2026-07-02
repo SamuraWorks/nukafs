@@ -5,7 +5,7 @@ import {
   Student,
   PendingRegistration,
   EditRequest,
-  NUKAFSEvent,
+  NUKaFsEvent,
   Announcement,
   AuditEntry,
   TeamMember,
@@ -29,12 +29,16 @@ import {
 } from "@/lib/supabase/auth"
 import {
   fetchAnnouncements,
+  fetchEvents,
+  fetchOpportunities,
   fetchUniversities,
   fetchPendingRegistrations,
   fetchEditRequests,
   fetchStudents,
   createRegistration,
+  fetchRegistrySnapshot,
 } from "@/lib/supabase/registry"
+import { supabase } from "@/lib/supabase/client"
 
 export type AppRole = "guest" | "student_pending" | "student_active_wizard" | "student_active_complete" | "executive" | "stakeholder" | "super_admin"
 
@@ -74,14 +78,14 @@ export interface SystemSettings {
 }
 
 const defaultSettings: SystemSettings = {
-  systemName: "NUKAFS Registry",
+  systemName: "NUKaFs Registry",
   systemLogo: "",
   systemDescription: "The official registry for students of Koinadugu and Falaba districts.",
   registrationStatus: "Open",
   approvalWorkflow: "Manual",
   maintenanceMode: false,
   defaultUserRole: "student",
-  membershipNumberFormat: "NUKAFS-YYYY-XXXX",
+  membershipNumberFormat: "NUKaFs-YYYY-XXXX",
   profileCompletionRules: ["academic_info", "personal_info", "emergency_contact"],
   passwordPolicy: "Medium (8+ characters, letters and numbers)",
   sessionTimeout: "30 minutes",
@@ -129,7 +133,7 @@ interface AppStateContextProps {
   students: Student[]
   pendingRegistrations: PendingRegistration[]
   editRequests: EditRequest[]
-  events: NUKAFSEvent[]
+  events: NUKaFsEvent[]
   announcements: Announcement[]
   opportunities: Opportunity[]
   teamMembers: TeamMember[]
@@ -144,7 +148,7 @@ interface AppStateContextProps {
   register: (name: string, email: string, phone: string, password: string) => Promise<{ success: boolean; error?: string; role?: AppRole }>
   submitProfileWizard: (details: Partial<Student>) => void
   requestProfileUpdate: (fields: { field: string; newValue: string }[], reason: string) => void
-  approveRegistration: (id: string) => void
+  approveRegistration: (id: string) => Promise<void>
   rejectRegistration: (id: string, reason?: string) => void
   approveEditRequest: (id: string) => void
   rejectEditRequest: (id: string) => void
@@ -157,7 +161,7 @@ interface AppStateContextProps {
   editAnnouncement: (id: string, details: Partial<Announcement>) => void
   deleteAnnouncement: (id: string) => void
   addEvent: (title: string, date: string, time: string, location: string, description: string) => void
-  editEvent: (id: string, details: Partial<NUKAFSEvent>) => void
+  editEvent: (id: string, details: Partial<NUKaFsEvent>) => void
   cancelEvent: (id: string) => void
   deleteEvent: (id: string) => void
   addOpportunity: (opp: Omit<Opportunity, "id">) => void
@@ -175,6 +179,8 @@ interface AppStateContextProps {
   updateUniversitiesList: (list: string[]) => void
   switchRole: (role: AppRole) => void
   logout: () => void
+  refreshCurrentUser: () => Promise<any | null>
+  updateCurrentUserContext: (user: any) => void
   isHydrated: boolean
   addAuditLogEntry: (actor: string, action: string, target: string, type: "create" | "update" | "delete" | "approve" | "login") => void
   addNotification: (title: string, message: string, type: "info" | "success" | "warning" | "error") => void
@@ -187,7 +193,7 @@ const SESSION_DURATION_MS = 24 * 60 * 60 * 1000
 const defaultNotifications: UserNotification[] = [
   {
     id: "notif_1",
-    title: "Welcome to NUKAFS Registry",
+    title: "Welcome to NUKaFs Registry",
     message: "Your registry account has been approved and is fully active.",
     type: "success",
     category: "registration",
@@ -224,7 +230,7 @@ const defaultNotifications: UserNotification[] = [
   {
     id: "notif_5",
     title: "Career Fair Reminder",
-    message: "The NUKAFS Career Fair starts tomorrow at Fourah Bay College.",
+    message: "The NUKaFs Career Fair starts tomorrow at Fourah Bay College.",
     type: "warning",
     category: "event",
     read: true,
@@ -258,7 +264,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [students, setStudents] = useState<Student[]>([])
   const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>([])
   const [editRequests, setEditRequests] = useState<EditRequest[]>([])
-  const [events, setEvents] = useState<NUKAFSEvent[]>([])
+  const [events, setEvents] = useState<NUKaFsEvent[]>([])
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
@@ -267,6 +273,23 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(defaultSettings)
   const [universitiesList, setUniversitiesList] = useState<string[]>([])
   const [notifications, setNotifications] = useState<UserNotification[]>(defaultNotifications)
+
+  const refreshRegistryData = useCallback(async () => {
+    if (!isSupabaseEnabled) return
+
+    try {
+      const snapshot = await fetchRegistrySnapshot()
+      setStudents((snapshot.students ?? []) as Student[])
+      setPendingRegistrations((snapshot.pendingRegistrations ?? []) as PendingRegistration[])
+      setEditRequests((snapshot.editRequests ?? []) as EditRequest[])
+      setAnnouncements((snapshot.announcements ?? []) as Announcement[])
+      setEvents((snapshot.events ?? []) as NUKaFsEvent[])
+      setOpportunities((snapshot.opportunities ?? []) as Opportunity[])
+      setUniversitiesList((snapshot.universities ?? []) as string[])
+    } catch (error) {
+      console.error("Supabase refresh failed:", error)
+    }
+  }, [])
 
   // Load persisted state or seed mock data on mount
   useEffect(() => {
@@ -286,26 +309,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
             setCurrentUser(null)
           }
 
-          const [studentPage, pending, edits, announcementsData, universities] = await Promise.all([
-            fetchStudents(1, 50).then((result) => result.data).catch(() => []),
-              fetchPendingRegistrations().catch(() => []),
-              fetchEditRequests().catch(() => []),
-              fetchAnnouncements().catch(() => []),
-              fetchUniversities().catch(() => []),
-          ])
-
-          setStudents(studentPage as Student[])
-          setPendingRegistrations(pending as PendingRegistration[])
-          setEditRequests(edits as EditRequest[])
-          setAnnouncements(announcementsData as Announcement[])
-          setUniversitiesList(universities as string[])
+          await refreshRegistryData()
         } catch (error) {
           console.error("Supabase restore failed:", error)
-          setStudents(readStorage(STORAGE_KEYS.students, []))
-          setPendingRegistrations(readStorage(STORAGE_KEYS.pending, []))
-          setEditRequests(readStorage(STORAGE_KEYS.editRequests, []))
-          setAnnouncements(readStorage(STORAGE_KEYS.announcements, []))
-          setUniversitiesList(readStorage(STORAGE_KEYS.universities, []))
+          setStudents([])
+          setPendingRegistrations([])
+          setEditRequests([])
+          setAnnouncements([])
+          setEvents([])
+          setOpportunities([])
+          setUniversitiesList([])
         }
       } else {
         console.warn("Supabase is not configured. Production backend is required to run the registry.")
@@ -347,11 +360,48 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
 
     restoreState()
-  }, [])
+  }, [refreshRegistryData])
+
+  useEffect(() => {
+    if (!isSupabaseEnabled || !supabase) return
+
+    const channel = supabase.channel("registry-live-sync")
+
+    const tables = ["users", "registrations", "announcements", "events", "opportunities", "edit_requests", "universities"]
+    tables.forEach((table) => {
+      channel.on("postgres_changes", { event: "*", schema: "public", table }, () => {
+        void refreshRegistryData()
+      })
+    })
+
+    channel.subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [refreshRegistryData])
 
   const persistState = (key: (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS], data: unknown) => {
     persistToStorage(key, data)
   }
+
+  const refreshCurrentUser = useCallback(async () => {
+    try {
+      const session = await getCurrentSession()
+      const role = mapSupabaseRole(session.role)
+
+      setCurrentRole(role)
+      setCurrentUser(session.user)
+      persistToStorage(STORAGE_KEYS.user, session.user)
+      writeString(STORAGE_KEYS.role, role)
+      writeString(STORAGE_KEYS.sessionTimestamp, String(Date.now()))
+
+      return session.user
+    } catch (error) {
+      console.error("Failed to refresh current user session:", error)
+      return null
+    }
+  }, [])
 
   const handleSetRole = (role: AppRole) => {
     setCurrentRole(role)
@@ -373,6 +423,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(null)
     removeStorage(STORAGE_KEYS.user)
   }
+
+  const updateCurrentUserContext = useCallback((user: any) => {
+    setCurrentUser(user)
+    persistToStorage(STORAGE_KEYS.user, user)
+  }, [])
 
   // Auth Operations
   const login = async (emailOrPhone: string, password?: string) => {
@@ -429,29 +484,33 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     writeString(STORAGE_KEYS.role, role)
     writeString(STORAGE_KEYS.sessionTimestamp, String(Date.now()))
 
-    const registrationPayload = {
-      full_name: name,
-      email,
-      phone,
-      district: "Koinadugu",
-      submitted_date: new Date().toISOString().split("T")[0],
-      status: "pending",
-    }
-
-    await createRegistration(registrationPayload)
-
-    addAuditLogEntry(name, "registered account", "Pending Approval Queue", "create")
+    addAuditLogEntry(name, "created account", "Account Registration", "create")
 
     return { success: true, role }
   }
 
   // Profile Wizard completion
-  const submitProfileWizard = (details: Partial<Student>) => {
+  const submitProfileWizard = async (details: Partial<Student>) => {
     if (!currentUser) return
 
     const fullName = details.fullName || currentUser.fullName || currentUser.name || "Unknown Student"
     const phone = details.phone || currentUser.phone || "+232 76 000 000"
     const district = (details.district as Student["district"]) || "Koinadugu"
+
+    try {
+      await createRegistration({
+        user_id: currentUser.id,
+        full_name: fullName,
+        email: currentUser.email,
+        phone,
+        district,
+        submitted_date: new Date().toISOString().split("T")[0],
+        status: "pending",
+      })
+    } catch (error) {
+      console.error("Unable to create pending registration:", error)
+    }
+
     const pendingRegistration: PendingRegistration = {
       id: `pr_${Date.now()}`,
       fullName,
@@ -538,6 +597,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       const updatedUser = { ...currentUser, ...normalizedProfile }
       setCurrentUser(updatedUser)
       persistToStorage(STORAGE_KEYS.user, updatedUser)
+      await refreshCurrentUser()
+      await refreshRegistryData()
 
       addAuditLogEntry(
         currentUser.fullName || currentUser.name || "User",
@@ -561,60 +622,75 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Executive Operations
-  const approveRegistration = (id: string) => {
+  const approveRegistration = async (id: string) => {
     const item = pendingRegistrations.find(p => p.id === id)
     if (!item) return
 
-    const identity = createMembershipIdentity(students)
     const profile = (item.profile ?? {}) as Partial<Student> & Record<string, unknown>
     const fullName = item.fullName || item.name || String(profile.fullName || "")
-    const phone = String(profile.phone || item.phone || "+232 76 000 000")
-    const district = (profile.district as Student["district"]) || (item.district as Student["district"]) || "Koinadugu"
-    const university = String(profile.university || "Fourah Bay College (USL)")
-    const department = String(profile.department || "Science & Technology")
-    const course = String(profile.course || "Unspecified")
-    const level = String(profile.level || "Year 1")
-    const employmentStatus = String(profile.employmentStatus || "Student") === "Student" ? "Student" : "Unemployed"
+    const employmentStatus = String(profile.employmentStatus || item.employmentStatus || "Student")
+    const membershipType = employmentStatus === "Student" ? "student" : "student"
+    const targetUserId = String((item as any).user_id ?? (item as any).userId ?? item.id)
 
-    const newStudent: Student = {
-      id: `stu_${Date.now()}`,
-      membershipNumber: `NUKAFS-${new Date().getFullYear()}-${String(students.length + 1).padStart(4, "0")}`,
-      fullName,
-      email: item.email,
-      phone,
-      gender: "Male",
-      district,
-      chiefdom: "Wara Wara Yagala",
-      university,
-      course,
-      department,
-      level,
-      status: "active",
-      profileCompletion: 100,
-      joinedDate: new Date().toISOString().split("T")[0],
-      avatarColor: "oklch(0.62 0.1 200)",
-      employmentStatus,
-      skills: [],
-      scholarshipApplicant: false,
-      membershipId: identity.membershipId,
-      qrCode: identity.qrCodeValue,
-      qrCodeStatus: "active",
-      dateIssued: identity.dateIssued,
-      isMigratedToDigitalRegistry: false,
-      legacyMembershipHistory: "Registered in the digital registry",
+    try {
+      // Step 1: Call the production membership ID allocation API
+      // This atomically assigns the next sequential ID and creates the permanent identity record
+      // Only called on FIRST approval - the API will reject subsequent calls
+      const idRes = await fetch("/api/membership-id", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: targetUserId, membershipType }),
+      })
+
+      if (!idRes.ok) {
+        console.error("Failed to allocate membership ID:", await idRes.text())
+        addNotification("Approval Failed", `Could not assign membership ID for ${fullName}.`, "error")
+        return
+      }
+
+      const { identity } = await idRes.json()
+
+      // Step 2: Update the user record in the database: set status=active, verification_status=verified
+      // NOTE: QR Code and membership number are generated ONLY during first approval (Step 1)
+      // They NEVER change due to profile edits, password changes, or login/logout
+      const updateRes = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: targetUserId,
+          profile: {
+            status: "active",
+            verificationStatus: "verified",
+            role: employmentStatus === "Student" ? "student_active_complete" : "student_active_complete",
+            dateApproved: new Date().toISOString().split("T")[0],
+            membershipNumber: identity.membershipId,
+            qrCode: identity.qrCodeData,
+          },
+        }),
+      })
+
+      if (!updateRes.ok) {
+        console.error("Failed to update user status:", await updateRes.text())
+      }
+
+      // Step 3: Update local state
+      const updatedPending = pendingRegistrations.filter(p => p.id !== id)
+      setPendingRegistrations(updatedPending)
+      persistToStorage(STORAGE_KEYS.pending, updatedPending)
+
+      await refreshRegistryData()
+
+      const execName = currentUser ? (currentUser.name || currentUser.fullName) : "Executive"
+      addAuditLogEntry(execName, "approved registration", fullName, "approve")
+      addNotification(
+        "Registration Approved",
+        `Account for ${fullName} has been approved. Membership ID: ${identity.membershipId}. QR code generated and is now permanent.`,
+        "success"
+      )
+    } catch (error) {
+      console.error("approveRegistration error:", error)
+      addNotification("Approval Error", `An unexpected error occurred while approving ${fullName}.`, "error")
     }
-
-    const updatedStudents = [newStudent, ...students]
-    setStudents(updatedStudents)
-    persistToStorage(STORAGE_KEYS.students, updatedStudents)
-
-    const updatedPending = pendingRegistrations.filter(p => p.id !== id)
-    setPendingRegistrations(updatedPending)
-    persistToStorage(STORAGE_KEYS.pending, updatedPending)
-
-    const execName = currentUser ? (currentUser.name || currentUser.fullName) : "Executive"
-    addAuditLogEntry(execName, "approved registration", item.fullName, "approve")
-    addNotification("Registration Approved", `Account for ${item.fullName} has been approved.`, "success")
   }
 
   const rejectRegistration = (id: string, reason?: string) => {
@@ -624,13 +700,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const updatedPending = pendingRegistrations.filter(p => p.id !== id)
     setPendingRegistrations(updatedPending)
     persistToStorage(STORAGE_KEYS.pending, updatedPending)
+    void refreshRegistryData()
 
     const execName = currentUser ? (currentUser.name || currentUser.fullName) : "Executive"
     addAuditLogEntry(execName, `rejected registration${reason ? ` (Reason: ${reason})` : ""}`, item.fullName, "delete")
     addNotification("Registration Rejected", `Account registration for ${item.fullName} was rejected.`, "warning")
   }
 
-  const approveEditRequest = (id: string) => {
+  const approveEditRequest = async (id: string) => {
     const req = editRequests.find(r => r.id === id)
     if (!req) return
 
@@ -652,6 +729,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     )
     setEditRequests(updatedRequests)
     persistToStorage(STORAGE_KEYS.editRequests, updatedRequests)
+
+    await refreshRegistryData()
 
     const execName = currentUser ? (currentUser.name || currentUser.fullName) : "Executive"
     addAuditLogEntry(execName, "approved profile update", `${req.studentName} (${req.field})`, "approve")
@@ -747,7 +826,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   // Event operations
   const addEvent = (title: string, date: string, time: string, location: string, description: string) => {
-    const newEvt: NUKAFSEvent = {
+    const newEvt: NUKaFsEvent = {
       id: `evt_${Date.now()}`,
       title,
       date,
@@ -765,7 +844,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     addAuditLogEntry(actor, "created event", title, "create")
   }
 
-  const editEvent = (id: string, details: Partial<NUKAFSEvent>) => {
+  const editEvent = (id: string, details: Partial<NUKaFsEvent>) => {
     const updated = events.map(e => e.id === id ? { ...e, ...details } : e)
     setEvents(updated)
     persistToStorage(STORAGE_KEYS.events, updated)
@@ -1039,6 +1118,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         updateUniversitiesList,
         switchRole,
         logout,
+        refreshCurrentUser,
+        updateCurrentUserContext,
         isHydrated,
         addAuditLogEntry,
         addNotification

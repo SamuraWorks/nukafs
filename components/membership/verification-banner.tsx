@@ -43,7 +43,7 @@ export function VerificationBanner({ status, className }: VerificationBannerProp
           <ShieldCheck className="size-5 shrink-0" />
           <span>
             This is a verified member of the National Union of Koinadugu and
-            Falaba Students (NUKAFS-SL).
+            Falaba Students (NUKaFs-SL).
           </span>
         </>
       ) : (

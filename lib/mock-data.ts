@@ -1,5 +1,5 @@
 // ============================================================================
-// NUKAFS Registry — Mock Data Layer (Frontend Phase One)
+// NUKaFs Registry — Mock Data Layer (Frontend Phase One)
 // ----------------------------------------------------------------------------
 // This file centralises all simulated data so the UI looks fully functional
 // without a backend. Replace these exports with real data fetching (e.g.
@@ -44,8 +44,34 @@ export interface Student {
 export const DISTRICTS = ["Koinadugu", "Falaba"] as const
 
 export const CHIEFDOMS: Record<string, string[]> = {
-  Koinadugu: ["Wara Wara Yagala", "Sengbe", "Diang", "Neya", "Nieni", "Mongo", "Sulima"],
-  Falaba: ["Dembelia Sinkunia", "Folosaba Dembelia", "Kabala", "Sinkunia", "Gberia Fotombu"],
+  Koinadugu: [
+    "Diang",
+    "Gbonkobon Kayaka",
+    "Kalian",
+    "Kamukeh",
+    "Kasunko",
+    "Kellian",
+    "Nieni",
+    "Sengbe",
+    "Tamiso",
+    "Wara-Wara Bafodea",
+    "Wara-Wara Yagala",
+  ],
+  Falaba: [
+    "Dembelia Sikunia",
+    "Dembelia-Musaia",
+    "Delemandugu",
+    "Folasaba",
+    "Kamadu Yiraia",
+    "Kebelia",
+    "Kulor Saradu",
+    "Mongo",
+    "Morfindugu",
+    "Neya",
+    "Nyedu",
+    "Sulima",
+    "Wollay Barawa",
+  ],
 }
 
 export const UNIVERSITIES = [
@@ -108,8 +134,8 @@ function pick<T>(arr: readonly T[], i: number): T {
 function buildMembershipIdentity(index: number) {
   const sequence = (index + 1).toString().padStart(6, "0")
   return {
-    membershipId: `NUKAFS-${sequence}`,
-    qrCode: `NUKAFS-QR-${sequence}`,
+    membershipId: `NUKaFs-${sequence}`,
+    qrCode: `NUKaFs-QR-${sequence}`,
     qrCodeStatus: "active" as MembershipIdentityStatus,
     dateIssued: `2026-01-${String((index % 28) + 1).padStart(2, "0")}`,
     isMigratedToDigitalRegistry: index > 36,
@@ -127,7 +153,7 @@ function makeStudents(count: number): Student[] {
     const identity = buildMembershipIdentity(i)
     students.push({
       id: `stu_${(1000 + i).toString()}`,
-      membershipNumber: `NUKAFS-${(2024).toString()}-${(1000 + i).toString()}`,
+      membershipNumber: `NUKaFs-${(2024).toString()}-${(1000 + i).toString()}`,
       fullName: `${first} ${last}`,
       email: `${first.toLowerCase()}.${last.toLowerCase()}@student.edu.sl`,
       phone: `+232 ${76 + (i % 10)} ${(100000 + i * 137).toString().slice(0, 6)}`,
@@ -170,7 +196,7 @@ export const students: Student[] = makeStudents(48)
 // The "current" logged-in student used across the student dashboard.
 export const currentStudent: Student = {
   id: "stu_self",
-  membershipNumber: "NUKAFS-2024-0420",
+  membershipNumber: "NUKaFs-2024-0420",
   fullName: "Aminata Kamara",
   email: "aminata.kamara@student.edu.sl",
   phone: "+232 76 482 905",
@@ -188,8 +214,8 @@ export const currentStudent: Student = {
   employmentStatus: "Student",
   skills: ["Web Development", "Data Analysis", "Public Speaking"],
   scholarshipApplicant: true,
-  membershipId: "NUKAFS-000420",
-  qrCode: "NUKAFS-QR-000420",
+  membershipId: "NUKaFs-000420",
+  qrCode: "NUKaFs-QR-000420",
   qrCodeStatus: "active",
   dateIssued: "2026-02-14",
   isMigratedToDigitalRegistry: false,
@@ -222,7 +248,7 @@ export const announcements: Announcement[] = [
   {
     id: "ann_2",
     title: "Annual General Meeting — Kabala Town Hall",
-    body: "The NUKAFS Annual General Meeting will take place at the Kabala Town Hall. All members are encouraged to attend as we elect new executives and review the year's achievements.",
+    body: "The NUKaFs Annual General Meeting will take place at the Kabala Town Hall. All members are encouraged to attend as we elect new executives and review the year's achievements.",
     category: "Event",
     author: "General Secretary",
     date: "2024-08-28",
@@ -266,6 +292,10 @@ export interface Opportunity {
   amount?: string
   tags: string[]
   description: string
+  applications?: number
+  views?: number
+  eligibleMembers?: number
+  status?: "Open" | "Closed" | "Archived"
 }
 
 export const opportunities: Opportunity[] = [
@@ -303,7 +333,7 @@ export const opportunities: Opportunity[] = [
   {
     id: "opp_4",
     title: "STEM Bursary for Female Students",
-    organization: "NUKAFS Women in Science",
+    organization: "NUKaFs Women in Science",
     type: "Scholarship",
     location: "All Campuses",
     deadline: "2024-11-05",
@@ -314,7 +344,7 @@ export const opportunities: Opportunity[] = [
   {
     id: "opp_5",
     title: "Regional Youth Coordinator",
-    organization: "NUKAFS Executive Council",
+    organization: "NUKaFs Executive Council",
     type: "Leadership",
     location: "Koinadugu",
     deadline: "2024-09-30",
@@ -336,7 +366,7 @@ export const opportunities: Opportunity[] = [
 // ---------------------------------------------------------------------------
 // Events
 // ---------------------------------------------------------------------------
-export interface NUKAFSEvent {
+export interface NUKaFsEvent {
   id: string
   title: string
   date: string
@@ -347,10 +377,10 @@ export interface NUKAFSEvent {
   attendees: number
 }
 
-export const events: NUKAFSEvent[] = [
+export const events: NUKaFsEvent[] = [
   {
     id: "evt_1",
-    title: "NUKAFS Annual General Meeting",
+    title: "NUKaFs Annual General Meeting",
     date: "2024-10-12",
     time: "10:00 AM",
     location: "Kabala Town Hall",
@@ -420,7 +450,7 @@ export const editRequests: EditRequest[] = [
   {
     id: "req_1",
     studentName: "Aminata Kamara",
-    membershipNumber: "NUKAFS-2024-0420",
+    membershipNumber: "NUKaFs-2024-0420",
     field: "Phone Number",
     oldValue: "+232 76 482 905",
     newValue: "+232 78 904 112",
@@ -431,7 +461,7 @@ export const editRequests: EditRequest[] = [
   {
     id: "req_2",
     studentName: "Aminata Kamara",
-    membershipNumber: "NUKAFS-2024-0420",
+    membershipNumber: "NUKaFs-2024-0420",
     field: "Level",
     oldValue: "Year 2",
     newValue: "Year 3",
@@ -443,7 +473,7 @@ export const editRequests: EditRequest[] = [
   {
     id: "req_3",
     studentName: "Aminata Kamara",
-    membershipNumber: "NUKAFS-2024-0420",
+    membershipNumber: "NUKaFs-2024-0420",
     field: "Course",
     oldValue: "Information Technology",
     newValue: "Computer Science",
@@ -494,10 +524,10 @@ export interface TeamMember {
 }
 
 export const teamMembers: TeamMember[] = [
-  { id: "tm_1", name: "Alusine Bangura", email: "president@NUKAFS.org", role: "super_admin", title: "President", status: "active", lastActive: "2 hours ago" },
-  { id: "tm_2", name: "Fatmata Koroma", email: "secretary@NUKAFS.org", role: "executive", title: "General Secretary", status: "active", lastActive: "1 hour ago" },
-  { id: "tm_3", name: "Mohamed Sesay", email: "finance@NUKAFS.org", role: "executive", title: "Financial Secretary", status: "active", lastActive: "5 hours ago" },
-  { id: "tm_4", name: "Isatu Bah", email: "academic@NUKAFS.org", role: "executive", title: "Academic Affairs Officer", status: "active", lastActive: "Yesterday" },
+  { id: "tm_1", name: "Alusine Bangura", email: "president@NUKaFs.org", role: "super_admin", title: "President", status: "active", lastActive: "2 hours ago" },
+  { id: "tm_2", name: "Fatmata Koroma", email: "secretary@NUKaFs.org", role: "executive", title: "General Secretary", status: "active", lastActive: "1 hour ago" },
+  { id: "tm_3", name: "Mohamed Sesay", email: "finance@NUKaFs.org", role: "executive", title: "Financial Secretary", status: "active", lastActive: "5 hours ago" },
+  { id: "tm_4", name: "Isatu Bah", email: "academic@NUKaFs.org", role: "executive", title: "Academic Affairs Officer", status: "active", lastActive: "Yesterday" },
   { id: "tm_5", name: "Dr. Brima Sankoh", email: "patron@njala.edu.sl", role: "stakeholder", title: "University Patron", status: "active", lastActive: "3 days ago" },
   { id: "tm_6", name: "Hon. Adama Marrah", email: "partner@health.gov.sl", role: "stakeholder", title: "Government Partner", status: "invited", lastActive: "—" },
 ]
@@ -513,7 +543,7 @@ export interface AuditEntry {
 
 export const auditLog: AuditEntry[] = [
   { id: "log_1", actor: "Fatmata Koroma", action: "approved registration", target: "Sahr Mansaray", timestamp: "2024-09-03 14:22", type: "approve" },
-  { id: "log_2", actor: "Mohamed Sesay", action: "updated profile field", target: "NUKAFS-2024-0412", timestamp: "2024-09-03 11:05", type: "update" },
+  { id: "log_2", actor: "Mohamed Sesay", action: "updated profile field", target: "NUKaFs-2024-0412", timestamp: "2024-09-03 11:05", type: "update" },
   { id: "log_3", actor: "Alusine Bangura", action: "added executive", target: "Isatu Bah", timestamp: "2024-09-02 16:40", type: "create" },
   { id: "log_4", actor: "Fatmata Koroma", action: "rejected edit request", target: "REQ-3091", timestamp: "2024-09-02 09:18", type: "delete" },
   { id: "log_5", actor: "Isatu Bah", action: "signed in", target: "Executive Dashboard", timestamp: "2024-09-02 08:55", type: "login" },
@@ -631,7 +661,7 @@ export const testimonials = [
   {
     name: "Sahr Mansaray",
     role: "Computer Science, FBC",
-    quote: "NUKAFS Registry made it simple to find a scholarship that paid my full tuition. Everything is in one place.",
+    quote: "NUKaFs Registry made it simple to find a scholarship that paid my full tuition. Everything is in one place.",
   },
   {
     name: "Mariama Jalloh",
@@ -647,7 +677,7 @@ export const testimonials = [
 
 export const faqs = [
   {
-    q: "Who can register with NUKAFS Registry?",
+    q: "Who can register with NUKaFs Registry?",
     a: "Any tertiary student who hails from the Koinadugu or Falaba districts of Sierra Leone is eligible to register and become a member.",
   },
   {

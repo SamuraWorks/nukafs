@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Menu } from "lucide-react"
 import { useState } from "react"
-import { NUKAFSLogo } from "@/components/nukafs-logo"
+import { NUKaFsLogo } from "@/components/nukafs-logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import {
@@ -27,8 +27,8 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link href="/" aria-label="NUKAFS Registry home">
-          <NUKAFSLogo />
+        <Link href="/" aria-label="NUKaFs Registry home">
+          <NUKaFsLogo />
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           {links.map((link) => (
@@ -50,7 +50,7 @@ export function SiteHeader() {
             <SheetContent side="right" className="w-72">
               <SheetHeader>
                 <SheetTitle>
-                  <NUKAFSLogo />
+                  <NUKaFsLogo />
                 </SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-1 px-4">

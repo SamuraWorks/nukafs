@@ -9,12 +9,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { NUKAFSLogo } from "@/components/nukafs-logo"
+import { NUKaFsLogo } from "@/components/nukafs-logo"
 import { toast } from "sonner"
 import { validateEmail } from "@/lib/security/validation"
 
 export default function LoginPage() {
-  const { login, currentRole, logout } = useAppState()
+  const { login, currentRole, currentUser, logout } = useAppState()
   const router = useRouter()
   
   const [email, setEmail] = useState("")
@@ -58,7 +58,9 @@ export default function LoginPage() {
     }
   }
 
-  if (isPendingScreen || currentRole === "student_pending") {
+  const showPendingApproval = isPendingScreen || (currentRole === "student_pending" && currentUser?.role !== "super_admin")
+
+  if (showPendingApproval) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 font-sans">
         <Card className="w-full max-w-md border-amber-500/20 shadow-2xl animate-in fade-in duration-300">
@@ -70,17 +72,20 @@ export default function LoginPage() {
             <div className="flex flex-col gap-2">
               <h2 className="font-heading text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400">Account Pending Approval</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Your registry registration request is still pending review. You cannot access the student workspace yet.
+                Your registration has been successfully submitted and is awaiting approval by the NUKaFs Administration. Your QR Membership Verification Code will be generated automatically once your registration is approved.
               </p>
             </div>
 
             <div className="rounded-xl bg-muted border border-border p-4 text-xs text-left leading-relaxed text-muted-foreground flex gap-3">
               <ShieldCheck className="size-5 shrink-0 text-primary mt-0.5" />
               <div>
-                <p className="font-semibold text-foreground mb-1">Manual Approval Required</p>
-                <p>
-                  To protect our scholarship funds and membership resources, NUKAFS Executives manually crosscheck all registration applications. Please check back later.
-                </p>
+                <p className="font-semibold text-foreground mb-1">What Happens Next</p>
+                <ul className="space-y-2">
+                  <li>• NUKaFs Executives will review your application</li>
+                  <li>• Upon approval, your membership ID and QR code are generated instantly</li>
+                  <li>• You'll gain full access to the member dashboard</li>
+                  <li>• Your membership card will be available for download</li>
+                </ul>
               </div>
             </div>
 
@@ -110,8 +115,8 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4 font-sans">
       <div className="mb-6 flex flex-col items-center">
-        <Link href="/" aria-label="NUKAFS Registry Home">
-          <NUKAFSLogo className="scale-110 mb-2" />
+        <Link href="/" aria-label="NUKaFs Registry Home">
+          <NUKaFsLogo className="scale-110 mb-2" />
         </Link>
       </div>
 

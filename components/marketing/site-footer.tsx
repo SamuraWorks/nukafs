@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Globe, Mail, Phone } from "lucide-react"
-import { NUKAFSLogo } from "@/components/nukafs-logo"
+import { NUKaFsLogo } from "@/components/nukafs-logo"
 
 const columns = [
   {
@@ -24,7 +24,7 @@ const columns = [
   {
     title: "Union",
     links: [
-      { label: "About NUKAFS", href: "#about" },
+      { label: "About NUKaFs", href: "#about" },
       { label: "Executive Council", href: "#about" },
       { label: "Contact", href: "#contact" },
       { label: "Partners", href: "#about" },
@@ -38,7 +38,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <NUKAFSLogo />
+            <NUKaFsLogo />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               The official membership registry of the Koinadugu &amp; Falaba Students&apos; Union — connecting students
               with opportunities, leadership and community.
@@ -72,7 +72,7 @@ export function SiteFooter() {
           ))}
         </div>
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t pt-6 text-sm text-muted-foreground sm:flex-row">
-          <p>© {new Date().getFullYear()} NUKAFS Registry. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} NUKaFs Registry. All rights reserved.</p>
           <p>Koinadugu &amp; Falaba, Sierra Leone</p>
         </div>
       </div>

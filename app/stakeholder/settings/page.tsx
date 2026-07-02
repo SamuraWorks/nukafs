@@ -1,10 +1,14 @@
-import { AccountSettingsPage } from "@/components/account/account-settings"
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function StakeholderSettingsPage() {
-  return (
-    <AccountSettingsPage
-      title="Account Settings"
-      description="Manage your stakeholder account preferences and notifications."
-    />
-  )
+  const router = useRouter()
+
+  useEffect(() => {
+    router.replace("/stakeholder/profile")
+  }, [router])
+
+  return null
 }

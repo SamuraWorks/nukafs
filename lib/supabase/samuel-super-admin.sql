@@ -92,9 +92,9 @@ BEGIN
     vurl := 'https://registry.nukafs-sl.org/verify/' || vtoken;
 
     INSERT INTO membership_identities (user_id, membership_id, membership_type, verification_token, verification_url, qr_code_data, qr_code_status, created_at, updated_at)
-    SELECT samuel_id, 'NUKAFS-000001', 'student', vtoken, vurl, vurl, 'active', now(), now()
+    SELECT samuel_id, 'NUKaFs-000001', 'student', vtoken, vurl, vurl, 'active', now(), now()
     WHERE NOT EXISTS (
-      SELECT 1 FROM membership_identities WHERE user_id = samuel_id OR membership_id = 'NUKAFS-000001'
+      SELECT 1 FROM membership_identities WHERE user_id = samuel_id OR membership_id = 'NUKaFs-000001'
     );
 
     -- Update the app users row with the core identity fields
@@ -106,7 +106,7 @@ BEGIN
       role = 'super_admin',
       status = 'active',
       profile_completion = 100,
-      membership_number = 'NUKAFS-000001',
+      membership_number = 'NUKaFs-000001',
       membership_type = 'Student',
       membership_status = 'active',
       verification_status = 'Verified',
@@ -161,7 +161,7 @@ BEGIN
         samuel_id,
         'Samuel Samura',
         'bootstrapped super admin profile',
-        'NUKAFS-000001',
+        'NUKaFs-000001',
         'system',
         'Membership',
         'success',
@@ -176,7 +176,7 @@ END $$;
 SELECT 'membership_identities' AS table_name, mi.membership_id, mi.verification_url, u.email
 FROM membership_identities mi
 LEFT JOIN auth.users u ON u.id = mi.user_id
-WHERE mi.membership_id = 'NUKAFS-000001';
+WHERE mi.membership_id = 'NUKaFs-000001';
 
 SELECT 'users' AS table_name, full_name, email, role, membership_number, verification_status, qr_code
 FROM users

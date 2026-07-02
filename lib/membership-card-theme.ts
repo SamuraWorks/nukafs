@@ -1,4 +1,4 @@
-/** NUKAFS-SL membership card — premium government ID palette */
+/** NUKaFs-SL membership card — premium government ID palette */
 export const CARD_THEME = {
   navy: "#0B1F3A",
   navyMid: "#132B4D",
