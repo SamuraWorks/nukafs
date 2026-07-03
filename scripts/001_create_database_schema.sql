@@ -728,7 +728,7 @@ DROP POLICY IF EXISTS "users_select_all_admin" ON public.users;
 CREATE POLICY "users_select_all_admin" ON public.users
 FOR SELECT TO authenticated
 USING (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin'
+  auth.jwt() ->> 'role' = 'super_admin'
 );
 
 -- Users can read non-sensitive fields of other users for discovery
@@ -736,10 +736,7 @@ DROP POLICY IF EXISTS "users_select_partial" ON public.users;
 CREATE POLICY "users_select_partial" ON public.users
 FOR SELECT TO authenticated
 USING (
-  CASE 
-    WHEN (SELECT role FROM public.users WHERE id = auth.uid()) IN ('super_admin', 'executive') THEN true
-    ELSE false
-  END
+  auth.jwt() ->> 'role' IN ('super_admin', 'executive')
 );
 
 -- Users can update their own profile
@@ -754,10 +751,10 @@ DROP POLICY IF EXISTS "users_update_admin" ON public.users;
 CREATE POLICY "users_update_admin" ON public.users
 FOR UPDATE TO authenticated
 USING (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin'
+  auth.jwt() ->> 'role' = 'super_admin'
 )
 WITH CHECK (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin'
+  auth.jwt() ->> 'role' = 'super_admin'
 );
 
 -- ===== RLS Policy: Membership Identities =====
@@ -773,7 +770,7 @@ DROP POLICY IF EXISTS "membership_identities_select_admin" ON public.membership_
 CREATE POLICY "membership_identities_select_admin" ON public.membership_identities
 FOR SELECT TO authenticated
 USING (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin'
+  auth.jwt() ->> 'role' = 'super_admin'
 );
 
 -- ===== RLS Policy: Opportunities =====
@@ -791,7 +788,7 @@ FOR SELECT TO authenticated
 USING (
   published_by = auth.uid() OR 
   status = 'published' OR
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin'
+  auth.jwt() ->> 'role' = 'super_admin'
 );
 
 -- Approved stakeholders and admins can insert opportunities
@@ -800,8 +797,8 @@ CREATE POLICY "opportunities_insert_authorized" ON public.opportunities
 FOR INSERT TO authenticated
 WITH CHECK (
   published_by = auth.uid() AND (
-    (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin' OR
-    (SELECT role FROM public.users WHERE id = auth.uid()) = 'stakeholder' AND
+    auth.jwt() ->> 'role' = 'super_admin' OR
+    auth.jwt() ->> 'role' = 'stakeholder' AND
     (SELECT status FROM public.users WHERE id = auth.uid()) = 'active_complete'
   )
 );
@@ -812,11 +809,11 @@ CREATE POLICY "opportunities_update_authorized" ON public.opportunities
 FOR UPDATE TO authenticated
 USING (
   published_by = auth.uid() OR
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin'
+  auth.jwt() ->> 'role' = 'super_admin'
 )
 WITH CHECK (
   published_by = auth.uid() OR
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin'
+  auth.jwt() ->> 'role' = 'super_admin'
 );
 
 -- ===== RLS Policy: Announcements =====
@@ -832,7 +829,7 @@ DROP POLICY IF EXISTS "announcements_select_admin" ON public.announcements;
 CREATE POLICY "announcements_select_admin" ON public.announcements
 FOR SELECT TO authenticated
 USING (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin' OR
+  auth.jwt() ->> 'role' = 'super_admin' OR
   status = 'published'
 );
 
@@ -841,7 +838,7 @@ DROP POLICY IF EXISTS "announcements_insert_admin" ON public.announcements;
 CREATE POLICY "announcements_insert_admin" ON public.announcements
 FOR INSERT TO authenticated
 WITH CHECK (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin' AND
+  auth.jwt() ->> 'role' = 'super_admin' AND
   published_by = auth.uid()
 );
 
@@ -850,10 +847,10 @@ DROP POLICY IF EXISTS "announcements_update_admin" ON public.announcements;
 CREATE POLICY "announcements_update_admin" ON public.announcements
 FOR UPDATE TO authenticated
 USING (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin'
+  auth.jwt() ->> 'role' = 'super_admin'
 )
 WITH CHECK (
-  (SELECT role FROM public.users WHERE id = auth.uid()) = 'super_admin'
+  auth.jwt() ->> 'role' = 'super_admin'
 );
 
 -- ===== RLS Policy: Audit Logs =====

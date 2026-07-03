@@ -655,6 +655,7 @@ const detailsAny = details as Record<string, any>
         email,
         phone,
         district,
+        chiefdom: detailsAny.chiefdom as string | undefined,
         submitted_date: new Date().toISOString().split("T")[0],
         status: "pending",
         role: employmentStatus === "Student" ? "student" : "graduate",
@@ -664,6 +665,7 @@ const detailsAny = details as Record<string, any>
           email,
           phone,
           district,
+          chiefdom: detailsAny.chiefdom,
           employmentStatus,
         },
         university,
@@ -881,7 +883,9 @@ const detailsAny = details as Record<string, any>
     const profile = (item.profile ?? {}) as Partial<Student> & Record<string, unknown>
     const fullName = item.fullName || item.name || String(profile.fullName || "")
     const employmentStatus = String(profile.employmentStatus || item.employmentStatus || "Student")
-    const membershipType = employmentStatus === "Student" ? "student" : "student"
+    const membershipType = "student"
+    const isSuperAdminApproval = currentRole === "super_admin"
+    const approvedRole = isSuperAdminApproval ? "executive" : "student_active_complete"
     const targetUserId = String((item as any).user_id ?? (item as any).userId ?? "")
 
     if (!targetUserId) {
@@ -918,7 +922,7 @@ const detailsAny = details as Record<string, any>
           profile: {
             status: "active",
             verificationStatus: "verified",
-            role: employmentStatus === "Student" ? "student_active_complete" : "student_active_complete",
+            role: approvedRole,
             dateApproved: new Date().toISOString().split("T")[0],
             membershipNumber: identity.membershipId,
             qrCode: identity.qrCodeData,

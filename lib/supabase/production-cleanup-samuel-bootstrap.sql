@@ -194,30 +194,84 @@ BEGIN
     SELECT 1 FROM information_schema.tables
     WHERE table_schema = current_schema() AND table_name = 'users'
   ) THEN
-    UPDATE users
-    SET
-      full_name = samuel_full_name,
-      email = samuel_email,
-      phone = '+23279630777',
-      role = 'super_admin',
-      status = 'active',
-      profile_completion = 100,
-      membership_number = 'NUKaFs-000001',
-      membership_type = 'Student',
-      membership_status = 'active',
-      verification_status = 'Verified',
-      account_status = 'Approved',
-      password_change_required = true,
-      membership_sequence = 1,
-      qr_code = vurl,
-      qr_code_status = 'active',
-      permanent_qr_code = vurl,
-      date_issued = CURRENT_DATE,
-      joined_date = CURRENT_DATE,
-      is_migrated_to_digital_registry = true,
-      legacy_membership_history = 'Bootstrapped Samuel Samura as first permanent member',
-      updated_at = now()
-    WHERE id = samuel_id;
+    IF NOT EXISTS (
+      SELECT 1 FROM users WHERE id = samuel_id
+    ) THEN
+      INSERT INTO users (
+        id,
+        full_name,
+        email,
+        phone,
+        role,
+        status,
+        profile_completion,
+        membership_number,
+        membership_type,
+        membership_status,
+        verification_status,
+        account_status,
+        password_change_required,
+        membership_sequence,
+        qr_code,
+        qr_code_status,
+        permanent_qr_code,
+        date_issued,
+        joined_date,
+        is_migrated_to_digital_registry,
+        legacy_membership_history,
+        created_at,
+        updated_at
+      ) VALUES (
+        samuel_id,
+        samuel_full_name,
+        samuel_email,
+        '+23279630777',
+        'super_admin',
+        'active',
+        100,
+        'NUKaFs-000001',
+        'Student',
+        'active',
+        'Verified',
+        'Approved',
+        true,
+        1,
+        vurl,
+        'active',
+        vurl,
+        CURRENT_DATE,
+        CURRENT_DATE,
+        true,
+        'Bootstrapped Samuel Samura as first permanent member',
+        now(),
+        now()
+      );
+    ELSE
+      UPDATE users
+      SET
+        full_name = samuel_full_name,
+        email = samuel_email,
+        phone = '+23279630777',
+        role = 'super_admin',
+        status = 'active',
+        profile_completion = 100,
+        membership_number = 'NUKaFs-000001',
+        membership_type = 'Student',
+        membership_status = 'active',
+        verification_status = 'Verified',
+        account_status = 'Approved',
+        password_change_required = true,
+        membership_sequence = 1,
+        qr_code = vurl,
+        qr_code_status = 'active',
+        permanent_qr_code = vurl,
+        date_issued = CURRENT_DATE,
+        joined_date = CURRENT_DATE,
+        is_migrated_to_digital_registry = true,
+        legacy_membership_history = 'Bootstrapped Samuel Samura as first permanent member',
+        updated_at = now()
+      WHERE id = samuel_id;
+    END IF;
   END IF;
 
   IF EXISTS (
