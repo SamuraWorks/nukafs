@@ -24,7 +24,7 @@ export async function GET() {
       .from("registrations")
       .select("*")
       .eq("status", "pending")
-      .order("submitted_date", { ascending: true })
+      .order("submitted_at", { ascending: true })
       .order("created_at", { ascending: true })
 
     if (error) {
@@ -45,12 +45,55 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const registration = await request.json()
+    const registration = (await request.json()) as Record<string, unknown>
     const adminClient = getAdminClient()
+
+    const allowedColumns = [
+      "user_id",
+      "full_name",
+      "email",
+      "phone",
+      "district",
+      "chiefdom",
+      "role",
+      "profile",
+      "university",
+      "department",
+      "course",
+      "level",
+      "employment_status",
+      "status",
+      "approved_by",
+      "reviewed_date",
+      "rejection_reason",
+      "approved_at",
+      "approval_notes",
+      "deleted_at",
+      "created_at",
+      "updated_at",
+      "submitted_at",
+    ]
+
+    const insertPayload: Record<string, unknown> = {}
+    for (const key of allowedColumns) {
+      if (registration[key] !== undefined) {
+        insertPayload[key] = registration[key]
+      }
+    }
+
+    insertPayload.status = registration?.status ?? "pending"
+
+    if (registration?.submitted_date !== undefined) {
+      insertPayload.submitted_at = registration.submitted_date
+    }
+
+    if (insertPayload.submitted_at === undefined) {
+      insertPayload.submitted_at = new Date().toISOString()
+    }
 
     const { data, error } = await adminClient
       .from("registrations")
-      .insert([{ ...registration, status: registration?.status ?? "pending" }])
+      .insert([insertPayload])
       .select()
 
     if (error) {

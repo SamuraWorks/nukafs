@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     const [studentsRes, pendingRes, editRequestsRes, announcementsRes, eventsRes, opportunitiesRes, universitiesRes, studentUsersRes] =
       await Promise.all([
         adminClient.from("students").select("*").order("created_at", { ascending: false }),
-        adminClient.from("registrations").select("*").eq("status", "pending").order("submitted_date", { ascending: true }).order("created_at", { ascending: true }),
+        adminClient.from("registrations").select("*").eq("status", "pending").order("submitted_at", { ascending: true }).order("created_at", { ascending: true }),
         adminClient.from("edit_requests").select("*").order("submitted_date", { ascending: false }),
         adminClient.from("announcements").select("*").order("date", { ascending: false }),
         adminClient.from("events").select("*").order("date", { ascending: false }),

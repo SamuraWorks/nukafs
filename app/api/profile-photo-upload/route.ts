@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the user's stored photo path plus a signed URL for quick display.
-    const { data: updatedUser, error: updateError } = await supabase
+    let { data: updatedUser, error: updateError } = await supabase
       .from("users")
       .update({
         profile_photo: result.path,
@@ -79,10 +79,51 @@ export async function POST(request: NextRequest) {
     }
 
     if (!updatedUser) {
-      return NextResponse.json(
-        { error: "User not found when saving profile photo" },
-        { status: 404 },
-      )
+      const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId)
+      if (authError || !authUser) {
+        console.error("Profile photo upload failed because user row is missing and auth lookup failed:", authError)
+        return NextResponse.json(
+          { error: "User not found when saving profile photo" },
+          { status: 404 },
+        )
+      }
+
+      const email = authUser.email || authUser.user_metadata?.email || authUser.user_metadata?.full_name
+      const fullName = authUser.user_metadata?.full_name || authUser.user_metadata?.fullName || authUser.email || "Unknown User"
+
+      if (!email) {
+        console.error("Cannot create missing user row for profile photo upload because auth user has no email.")
+        return NextResponse.json(
+          { error: "Failed to persist profile photo metadata: missing user identity" },
+          { status: 500 },
+        )
+      }
+
+      const { data: createdUser, error: createError } = await supabase
+        .from("users")
+        .insert({
+          id: userId,
+          email,
+          full_name: fullName,
+          district: authUser.user_metadata?.district || "Unknown",
+          chiefdom: authUser.user_metadata?.chiefdom || "Unknown",
+          profile_photo: result.path,
+          profile_photo_url: result.url,
+          updated_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        })
+        .select("id, profile_photo, profile_photo_url")
+        .single()
+
+      if (createError) {
+        console.error("Failed to create missing user row for profile photo metadata:", createError)
+        return NextResponse.json(
+          { error: "Failed to persist profile photo metadata" },
+          { status: 500 },
+        )
+      }
+
+      updatedUser = createdUser
     }
 
     return NextResponse.json(

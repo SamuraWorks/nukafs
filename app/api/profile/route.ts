@@ -87,9 +87,7 @@ export async function PUT(request: NextRequest) {
       biography: profile?.biography,
       emergency_contact: profile?.emergencyContact,
       employment_status: profile?.employmentStatus,
-      profile_photo: profile?.profilePhoto,
-      profile_photo_url: profile?.profilePhotoUrl,
-      profile_completion: profile?.profileCompletion,
+      profile_completion_percentage: profile?.profileCompletion,
       // Approval fields — only set when provided
       status: profile?.status,
       verification_status: profile?.verificationStatus,

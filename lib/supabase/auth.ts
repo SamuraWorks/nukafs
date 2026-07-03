@@ -105,7 +105,12 @@ function buildAuthenticatedUser(
   )
   const role = normalizeString(profileData?.role ?? metadata?.role) ?? "student_pending"
   const status = normalizeString(profileData?.status ?? metadata?.status) ?? "pending"
-  const profileCompletion = normalizeNumber(profileData?.profile_completion ?? metadata?.profile_completion) ?? 100
+  const profileCompletion = normalizeNumber(
+    profileData?.profile_completion ??
+    profileData?.profile_completion_percentage ??
+    metadata?.profile_completion ??
+    metadata?.profile_completion_percentage,
+  ) ?? 100
   const profilePhotoUrl = normalizeString(profileData?.profile_photo_url)
   const profilePhotoPath = normalizeString(profileData?.profile_photo)
 
