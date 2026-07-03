@@ -286,10 +286,19 @@ CREATE TABLE IF NOT EXISTS public.registrations (
   phone VARCHAR(20),
   district VARCHAR(100) NOT NULL,
   chiefdom VARCHAR(100) NOT NULL,
+  role VARCHAR(50) DEFAULT 'student'
+    CHECK (role IN ('student', 'graduate', 'executive', 'stakeholder', 'super_admin')),
+  profile JSONB,
+  university VARCHAR(255),
+  department VARCHAR(255),
+  course VARCHAR(255),
+  level VARCHAR(50),
+  employment_status VARCHAR(50),
+  submitted_date DATE,
   
   -- Status Tracking
-  status VARCHAR(50) DEFAULT 'submitted'
-    CHECK (status IN ('submitted', 'under_review', 'approved', 'rejected', 'pending_payment')),
+  status VARCHAR(50) DEFAULT 'pending'
+    CHECK (status IN ('pending', 'submitted', 'under_review', 'approved', 'rejected', 'pending_payment')),
   
   -- Approval Workflow
   reviewed_by UUID REFERENCES public.users(id),
@@ -316,8 +325,17 @@ CREATE TABLE IF NOT EXISTS public.registrations (
 ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS reviewed_notes TEXT;
 ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS rejected_at TIMESTAMP;
 ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;
-ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'submitted'
-  CHECK (status IN ('submitted', 'under_review', 'approved', 'rejected', 'pending_payment'));
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'student'
+  CHECK (role IN ('student', 'graduate', 'executive', 'stakeholder', 'super_admin'));
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS profile JSONB;
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS university VARCHAR(255);
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS department VARCHAR(255);
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS course VARCHAR(255);
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS level VARCHAR(50);
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS employment_status VARCHAR(50);
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS submitted_date DATE;
+ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending'
+  CHECK (status IN ('pending', 'submitted', 'under_review', 'approved', 'rejected', 'pending_payment'));
 ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
 ALTER TABLE IF EXISTS public.registrations ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL;
 
