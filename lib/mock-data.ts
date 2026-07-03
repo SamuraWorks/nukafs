@@ -486,6 +486,7 @@ export const editRequests: EditRequest[] = [
 
 export interface PendingRegistration {
   id: string
+  userId?: string
   name?: string
   fullName: string
   email: string
@@ -494,6 +495,9 @@ export interface PendingRegistration {
   submittedDate: string
   status?: "pending" | "approved" | "rejected"
   role?: "student" | "graduate" | "stakeholder"
+  approvedBy?: string
+  reviewedDate?: string
+  rejectionReason?: string
   profile?: Record<string, unknown>
   university?: string
   department?: string

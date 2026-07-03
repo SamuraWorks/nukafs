@@ -73,7 +73,7 @@ function SetupPageContent() {
     router.replace(`/setup?status=${membershipType}`)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!formData.fullName || !formData.phone || !formData.email) {
@@ -103,16 +103,21 @@ function SetupPageContent() {
     }
 
     setIsSubmitting(true)
-    submitProfileWizard({
+    const success = await submitProfileWizard({
       ...formData,
       employmentStatus: activeMembershipType === "student" ? "Student" : "Graduate",
       status: "pending",
       profileCompletion: 100,
     } as any)
-    setIsSubmitted(true)
     setIsSubmitting(false)
-    toast.success("Your application has been submitted successfully. The review team will assess your profile shortly.")
-    router.replace("/setup")
+
+    if (success) {
+      setIsSubmitted(true)
+      toast.success("Your application has been submitted successfully. The review team will assess your profile shortly.")
+      router.replace("/setup")
+    } else {
+      toast.error("Unable to submit your application. Please try again.")
+    }
   }
 
   if (isPendingReview || isSubmitted) {

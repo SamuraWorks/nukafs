@@ -1,7 +1,31 @@
 import { ensureSupabaseClient } from "@/lib/supabase/client"
 import type { SupabaseFetchResult, SupabaseRegistration } from "@/lib/supabase/types"
+import type { PendingRegistration } from "@/lib/mock-data"
 
 const DEFAULT_PAGE_SIZE = 25
+
+function normalizeRegistrationData(registration: SupabaseRegistration): PendingRegistration {
+  return {
+    id: registration.id,
+    userId: registration.user_id,
+    fullName: registration.full_name,
+    email: registration.email,
+    phone: registration.phone,
+    district: registration.district ?? "",
+    submittedDate: registration.submitted_date ?? registration.created_at ?? "",
+    status: (registration.status ?? "pending") as "pending" | "approved" | "rejected",
+    approvedBy: registration.approved_by,
+    reviewedDate: registration.reviewed_date,
+    rejectionReason: registration.rejection_reason,
+    role: registration.role as any,
+    profile: registration.profile as Record<string, unknown> | undefined,
+    university: registration.university,
+    department: registration.department,
+    course: registration.course,
+    level: registration.level,
+    employmentStatus: registration.employment_status,
+  }
+}
 
 function normalizeError(error: Error | null): string | undefined {
   return error?.message
@@ -112,7 +136,7 @@ export async function fetchPendingRegistrations() {
     throw new Error(result.message ?? "Failed to fetch registrations")
   }
 
-  return result.data ?? []
+  return (result.data ?? []).map((registration: SupabaseRegistration) => normalizeRegistrationData(registration))
 }
 
 export async function createRegistration(registration: Omit<SupabaseRegistration, "id" | "created_at">) {

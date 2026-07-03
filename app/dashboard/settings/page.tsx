@@ -122,7 +122,7 @@ export default function SettingsPage() {
   }
 
   const handleDeleteAccount = () => {
-    toast.error("Account deletion is managed by the Executive Council. Please contact registry@NUKaFs.org.")
+    toast.error("Account deletion is managed by the Executive Council. Please contact syscend@gmail.com.")
   }
 
   const toggleNotif = (key: keyof typeof notifications) => (v: boolean) =>

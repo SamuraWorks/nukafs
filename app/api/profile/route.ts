@@ -6,6 +6,45 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+export async function GET(request: NextRequest) {
+  try {
+    const url = new URL(request.url)
+    const userId = url.searchParams.get("userId")
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "Missing userId" },
+        { status: 400 },
+      )
+    }
+
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle()
+
+    if (error) {
+      throw error
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 },
+      )
+    }
+
+    return NextResponse.json({ success: true, user })
+  } catch (error: any) {
+    console.error("Profile fetch error:", error)
+    return NextResponse.json(
+      { success: false, message: error?.message || "Failed to fetch profile" },
+      { status: 500 },
+    )
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
@@ -35,12 +74,12 @@ export async function PUT(request: NextRequest) {
       campus: profile?.campus,
       faculty: profile?.faculty,
       department: profile?.department,
-      course: profile?.courseName,
-      level: profile?.academicLevel,
-      student_id: profile?.studentId,
+      course: profile?.courseName ?? profile?.course,
+      level: profile?.academicLevel ?? profile?.level,
+      student_id: profile?.studentId ?? profile?.studentIdNumber,
       admission_year: profile?.admissionYear,
       graduation_year: profile?.graduationYear,
-      expected_graduation_year: profile?.expectedGraduationYear,
+      expected_graduation_year: profile?.expectedGraduationYear ?? profile?.expectedGradYear,
       college: profile?.college,
       organization: profile?.organization,
       skills: profile?.skills,
@@ -50,7 +89,7 @@ export async function PUT(request: NextRequest) {
       employment_status: profile?.employmentStatus,
       profile_photo: profile?.profilePhoto,
       profile_photo_url: profile?.profilePhotoUrl,
-      profile_completion: profile?.profileCompletion !== undefined ? profile.profileCompletion : 100,
+      profile_completion: profile?.profileCompletion,
       // Approval fields — only set when provided
       status: profile?.status,
       verification_status: profile?.verificationStatus,
@@ -66,20 +105,23 @@ export async function PUT(request: NextRequest) {
       Object.entries(rawPayload).filter(([, v]) => v !== undefined)
     )
 
-    const { error } = await supabase
+    const { data: updatedUserData, error: upsertError } = await supabase
       .from("users")
-      .update(updatePayload)
-      .eq("id", userId)
+      .upsert({ id: userId, ...updatePayload }, { onConflict: "id" })
+      .select("*")
 
-    if (error) {
-      throw error
+    if (upsertError) {
+      throw upsertError
     }
 
-    const { data: updatedUser } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", userId)
-      .single()
+    const updatedUser = Array.isArray(updatedUserData) ? updatedUserData[0] : updatedUserData
+
+    if (!updatedUser) {
+      return NextResponse.json(
+        { success: false, message: "User not found after update" },
+        { status: 404 },
+      )
+    }
 
     await supabase.from("audit_logs").insert({
       actor_id: userId,

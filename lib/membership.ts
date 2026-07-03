@@ -244,6 +244,6 @@ export function getVerifyUrl(membershipNumber: string, origin?: string): string 
 
 export const NUKaFs_CONTACT = {
   website: "www.nukafs-sl.org",
-  email: "registry@nukafs-sl.org",
-  phone: "+232 76 000 000",
+  email: "syscend@gmail.com",
+  phone: "+23279630777",
 } as const

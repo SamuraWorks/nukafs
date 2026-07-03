@@ -109,6 +109,8 @@ export async function POST(request: Request) {
       `Email: ${email}`,
       `Temporary password: ${temporaryPassword}`,
       "",
+      "If you need help, contact syscend@gmail.com or +23279630777.",
+      "",
       "Please sign in and change your password immediately.",
     ].join("\n")
 

@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the user's stored photo path plus a signed URL for quick display.
-    const { error: updateError } = await supabase
+    const { data: updatedUser, error: updateError } = await supabase
       .from("users")
       .update({
         profile_photo: result.path,
@@ -67,11 +67,22 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", userId)
+      .select("id, profile_photo, profile_photo_url")
+      .single()
 
     if (updateError) {
       console.error("Failed to update profile_photo in database:", updateError)
-      // File was uploaded but DB update failed - still return success
-      // with note that profile needs refresh
+      return NextResponse.json(
+        { error: "Failed to persist profile photo metadata" },
+        { status: 500 },
+      )
+    }
+
+    if (!updatedUser) {
+      return NextResponse.json(
+        { error: "User not found when saving profile photo" },
+        { status: 404 },
+      )
     }
 
     return NextResponse.json(
@@ -79,6 +90,7 @@ export async function POST(request: NextRequest) {
         success: true,
         url: result.url,
         path: result.path,
+        user: updatedUser,
       },
       { status: 200 }
     )

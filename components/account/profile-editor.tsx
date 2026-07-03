@@ -169,6 +169,7 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
   })
 
   const [skillInput, setSkillInput] = useState("")
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     setFormData({
@@ -203,6 +204,7 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
       emergencyRelationship: currentUser?.emergencyContact?.relationship || "",
       emergencyPhone: currentUser?.emergencyContact?.phone || "",
     })
+    setTouchedFields({})
     setPhotoPreview(currentUser?.profilePhotoUrl || currentUser?.profilePhoto || null)
   }, [currentUser])
 
@@ -271,6 +273,7 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    setTouchedFields((prev) => ({ ...prev, [name]: true }))
   }
 
   const currentRoleLabel = useMemo(() => {
@@ -284,8 +287,10 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
     if (name === "district") {
       // Clear chiefdom when district changes
       setFormData((prev) => ({ ...prev, [name]: value, chiefdom: "" }))
+      setTouchedFields((prev) => ({ ...prev, district: true, chiefdom: true }))
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }))
+      setTouchedFields((prev) => ({ ...prev, [name]: true }))
     }
   }
 
@@ -297,11 +302,13 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
       return
     }
     setFormData((prev) => ({ ...prev, skills: [...prev.skills, nextSkill] }))
+    setTouchedFields((prev) => ({ ...prev, skills: true }))
     setSkillInput("")
   }
 
   const handleRemoveSkill = (skillToRemove: string) => {
     setFormData((prev) => ({ ...prev, skills: prev.skills.filter((skill: string) => skill !== skillToRemove) }))
+    setTouchedFields((prev) => ({ ...prev, skills: true }))
   }
 
   const handleSave = async () => {
@@ -357,6 +364,73 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
         profilePhotoUrl = photoData.url || profilePhotoUrl
       }
 
+      const profile: Record<string, unknown> = {
+        fullName: trimmedFullName,
+        email: trimmedEmail,
+        phone: trimmedPhone,
+      }
+
+      const assignField = (key: string, value: unknown) => {
+        if (touchedFields[key as keyof typeof touchedFields]) {
+          profile[key] = value
+        }
+      }
+
+      assignField("gender", formData.gender)
+      assignField("dob", formData.dob)
+      assignField("nationality", formData.nationality)
+      assignField("district", formData.district)
+      assignField("chiefdom", formData.chiefdom)
+      assignField("town", formData.town)
+      assignField("homeAddress", formData.homeAddress)
+      assignField("currentAddress", formData.currentAddress)
+      assignField("university", formData.university)
+      assignField("campus", formData.campus)
+      assignField("college", formData.college)
+      assignField("faculty", formData.faculty)
+      assignField("department", formData.department)
+      assignField("courseName", formData.courseName)
+      assignField("academicLevel", formData.academicLevel)
+      assignField("studentId", formData.studentId)
+      assignField("admissionYear", formData.admissionYear)
+      assignField("expectedGraduationYear", formData.expectedGraduationYear)
+      assignField("graduationYear", formData.graduationYear)
+      assignField("occupation", formData.occupation)
+      assignField("organization", formData.organization)
+      assignField("biography", formData.biography)
+      if (touchedFields.skills) {
+        profile.skills = formData.skills
+      }
+
+      const emergencyFieldsTouched =
+        touchedFields.emergencyName ||
+        touchedFields.emergencyRelationship ||
+        touchedFields.emergencyPhone
+
+      if (emergencyFieldsTouched) {
+        profile.emergencyContact = {
+          name: formData.emergencyName,
+          relationship: formData.emergencyRelationship,
+          phone: formData.emergencyPhone,
+        }
+      }
+
+      if (touchedFields.collegeStatus) {
+        profile.employmentStatus = formData.collegeStatus === "student" ? "Student" : "Graduate"
+      }
+
+      if (photoFile || touchedFields.profilePhoto || touchedFields.profilePhotoUrl) {
+        profile.profilePhoto = profilePhotoPath
+        profile.profilePhotoUrl = profilePhotoUrl
+      }
+
+      const hasChanges = photoFile || Object.values(touchedFields).some(Boolean)
+      if (!hasChanges) {
+        toast.error("No changes detected. Update one or more fields before saving.")
+        setIsSaving(false)
+        return
+      }
+
       const response = await fetch("/api/profile", {
         method: "PUT",
         headers: {
@@ -364,18 +438,7 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
         },
         body: JSON.stringify({
           userId: currentUser.id,
-          profile: {
-            ...formData,
-            employmentStatus: formData.collegeStatus === "student" ? "Student" : "Graduate",
-            skills: formData.skills,
-            profilePhoto: profilePhotoPath,
-            profilePhotoUrl,
-            emergencyContact: {
-              name: formData.emergencyName,
-              relationship: formData.emergencyRelationship,
-              phone: formData.emergencyPhone,
-            },
-          },
+          profile,
         }),
       })
 
@@ -384,70 +447,49 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
         throw new Error(errorData.error || "Failed to update profile")
       }
 
-      const responseData = await response.json()
-      
-      // Update the local context explicitly first, to prevent disappearing data
-      // even if refreshCurrentUser fails due to RLS cache issues
-      if (responseData.user) {
-         // Also update the global context immediately!
-         updateCurrentUserContext({
-           ...currentUser,
-           ...responseData.user,
-           fullName: responseData.user.full_name || responseData.user.fullName || currentUser?.fullName,
-           collegeStatus: responseData.user.employment_status === "Student" ? "student" : responseData.user.employment_status === "Graduate" ? "graduate" : currentUser?.collegeStatus,
-           courseName: responseData.user.course || responseData.user.courseName || currentUser?.courseName,
-           academicLevel: responseData.user.level || responseData.user.academicLevel || currentUser?.academicLevel,
-           studentId: responseData.user.student_id || responseData.user.studentId || currentUser?.studentId,
-           admissionYear: responseData.user.admission_year || responseData.user.admissionYear || currentUser?.admissionYear,
-           graduationYear: responseData.user.graduation_year || responseData.user.graduationYear || currentUser?.graduationYear,
-           expectedGraduationYear: responseData.user.expected_graduation_year || responseData.user.expectedGraduationYear || currentUser?.expectedGraduationYear,
-           profilePhoto: profilePhotoPath,
-           profilePhotoUrl,
-           emergencyContact: responseData.user.emergency_contact,
-           homeAddress: responseData.user.home_address || responseData.user.homeAddress || currentUser?.homeAddress,
-           currentAddress: responseData.user.current_address || responseData.user.currentAddress || currentUser?.currentAddress,
-         })
-         setFormData((prev) => ({
-          ...prev,
-          fullName: responseData.user.full_name || responseData.user.fullName || prev.fullName,
-          email: responseData.user.email || prev.email,
-          phone: responseData.user.phone || prev.phone,
-          gender: responseData.user.gender || prev.gender,
-          dob: responseData.user.dob || prev.dob,
-          nationality: responseData.user.nationality || prev.nationality,
-          district: responseData.user.district || prev.district,
-          chiefdom: responseData.user.chiefdom || prev.chiefdom,
-          town: responseData.user.town || prev.town,
-          homeAddress: responseData.user.home_address || responseData.user.homeAddress || prev.homeAddress,
-          currentAddress: responseData.user.current_address || responseData.user.currentAddress || prev.currentAddress,
-          collegeStatus: responseData.user.employment_status === "Student" ? "student" : responseData.user.employment_status === "Graduate" ? "graduate" : prev.collegeStatus,
-          university: responseData.user.university || prev.university,
-          campus: responseData.user.campus || prev.campus,
-          college: responseData.user.college || prev.college,
-          faculty: responseData.user.faculty || prev.faculty,
-          department: responseData.user.department || prev.department,
-          courseName: responseData.user.course || responseData.user.courseName || prev.courseName,
-          academicLevel: responseData.user.level || responseData.user.academicLevel || prev.academicLevel,
-          studentId: responseData.user.student_id || responseData.user.studentId || prev.studentId,
-          admissionYear: responseData.user.admission_year || responseData.user.admissionYear || prev.admissionYear,
-          graduationYear: responseData.user.graduation_year || responseData.user.graduationYear || prev.graduationYear,
-          expectedGraduationYear: responseData.user.expected_graduation_year || responseData.user.expectedGraduationYear || prev.expectedGraduationYear,
-          occupation: responseData.user.occupation || prev.occupation,
-          organization: responseData.user.organization || prev.organization,
-          biography: responseData.user.biography || prev.biography,
-          skills: responseData.user.skills || prev.skills,
-          emergencyName: responseData.user.emergency_contact?.name || prev.emergencyName,
-          emergencyRelationship: responseData.user.emergency_contact?.relationship || prev.emergencyRelationship,
-          emergencyPhone: responseData.user.emergency_contact?.phone || prev.emergencyPhone,
-        }))
-      }
-
-      // Still try to refresh context to update global state for background sync
+      await response.json()
       const refreshedUser: any = await refreshCurrentUser()
 
+      if (refreshedUser) {
+        updateCurrentUserContext(refreshedUser)
+        setFormData({
+          fullName: refreshedUser.fullName || refreshedUser.name || "",
+          email: refreshedUser.email || "",
+          phone: refreshedUser.phone || "",
+          gender: refreshedUser.gender || "",
+          dob: refreshedUser.dob || refreshedUser.dateOfBirth || "",
+          nationality: refreshedUser.nationality || "",
+          district: refreshedUser.district || "",
+          chiefdom: refreshedUser.chiefdom || "",
+          town: refreshedUser.town || "",
+          homeAddress: refreshedUser.homeAddress || "",
+          currentAddress: refreshedUser.currentAddress || "",
+          collegeStatus: refreshedUser.employmentStatus === "Student" ? "student" : refreshedUser.employmentStatus === "Graduate" ? "graduate" : "student",
+          university: refreshedUser.university || "",
+          campus: refreshedUser.campus || "",
+          college: refreshedUser.college || "",
+          faculty: refreshedUser.faculty || "",
+          department: refreshedUser.department || "",
+          courseName: refreshedUser.courseName || refreshedUser.course || "",
+          academicLevel: refreshedUser.academicLevel || refreshedUser.level || "",
+          studentId: refreshedUser.studentId || refreshedUser.membershipNumber || "",
+          admissionYear: refreshedUser.admissionYear || "",
+          expectedGraduationYear: refreshedUser.expectedGraduationYear || "",
+          graduationYear: refreshedUser.graduationYear || "",
+          occupation: refreshedUser.occupation || "",
+          organization: refreshedUser.organization || "",
+          biography: refreshedUser.biography || refreshedUser.bio || "",
+          skills: (refreshedUser.skills || []).map((skill: string) => skill),
+          emergencyName: refreshedUser.emergencyContact?.name || "",
+          emergencyRelationship: refreshedUser.emergencyContact?.relationship || "",
+          emergencyPhone: refreshedUser.emergencyContact?.phone || "",
+        })
+        setPhotoPreview(refreshedUser.profilePhotoUrl || refreshedUser.profilePhoto || profilePhotoUrl || null)
+      }
+
+      setTouchedFields({})
       setPhotoFile(null)
-      setPhotoPreview(refreshedUser?.profilePhotoUrl || profilePhotoUrl || currentUser?.profilePhotoUrl || currentUser?.profilePhoto || null)
-      toast.success("Profile saved successfully. Your registry, dashboard, and digital ID have been updated.")
+      toast.success("Profile saved successfully. Your registry profile has been updated.")
       router.refresh()
     } catch (error) {
       console.error("Profile save failed:", error)

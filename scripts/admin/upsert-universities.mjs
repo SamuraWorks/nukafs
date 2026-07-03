@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-import 'dotenv/config'
+import dotenv from 'dotenv'
+dotenv.config({ path: '.env.local' })
+dotenv.config()
 import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -29,17 +31,19 @@ function shortName(name) {
 async function main() {
   const payload = universities.map((name) => ({
     name,
-    short_name: shortName(name),
-    campus: '',
-    region: '',
-    active: true,
   }))
 
   console.log('Upserting', payload.length, 'universities...')
   const { data, error } = await supabase.from('universities').upsert(payload, { onConflict: 'name' })
   if (error) {
-    console.error('Failed to upsert universities:', error.message || error)
-    process.exit(1)
+    console.warn('Upsert failed. Falling back to insert if possible:', error.message || error)
+    const { data: insertData, error: insertError } = await supabase.from('universities').insert(payload)
+    if (insertError) {
+      console.error('Insert fallback also failed:', insertError.message || insertError)
+      process.exit(1)
+    }
+    console.log('Insert fallback complete. Result rows:', insertData?.length || 0)
+    return
   }
 
   console.log('Upsert complete. Result rows:', data?.length || 0)

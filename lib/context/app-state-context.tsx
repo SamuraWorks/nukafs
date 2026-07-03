@@ -127,6 +127,40 @@ function mapSupabaseRole(role: string | undefined): AppRole {
   }
 }
 
+function normalizeApiUser(user: Record<string, any>) {
+  if (!user) return user
+
+  return {
+    ...user,
+    fullName: user.full_name ?? user.fullName ?? user.name,
+    name: user.full_name ?? user.fullName ?? user.name,
+    profilePhotoUrl: user.profile_photo_url ?? user.profilePhotoUrl,
+    profilePhotoPath: user.profile_photo ?? user.profilePhotoPath,
+    membershipNumber: user.membership_number ?? user.membershipNumber,
+    membershipId: user.membership_number ?? user.membershipId,
+    verificationStatus: user.verification_status ?? user.verificationStatus,
+    employmentStatus: user.employment_status ?? user.employmentStatus,
+    courseName: user.course_name ?? user.courseName,
+    academicLevel: user.level ?? user.academicLevel,
+    homeAddress: user.home_address ?? user.homeAddress,
+    currentAddress: user.current_address ?? user.currentAddress,
+    studentId: user.student_id ?? user.studentId,
+    admissionYear: user.admission_year ?? user.admissionYear,
+    graduationYear: user.graduation_year ?? user.graduationYear,
+    expectedGraduationYear: user.expected_graduation_year ?? user.expectedGraduationYear,
+    biography: user.biography ?? user.bio,
+    emergencyContact: user.emergency_contact ?? user.emergencyContact,
+    skills: Array.isArray(user.skills) ? user.skills : user.skills ? [user.skills] : [],
+  }
+}
+
+const sortPendingRegistrationsByArrival = (registrations: PendingRegistration[]) =>
+  [...registrations].sort((a, b) => {
+    const aTime = new Date(a.submittedDate || "").getTime() || 0
+    const bTime = new Date(b.submittedDate || "").getTime() || 0
+    return aTime - bTime
+  })
+
 interface AppStateContextProps {
   currentRole: AppRole
   currentUser: any // Can be Student or TeamMember
@@ -146,10 +180,11 @@ interface AppStateContextProps {
   // Actions
   login: (emailOrPhone: string, password?: string) => Promise<{ success: boolean; error?: string; role?: AppRole }>
   register: (name: string, email: string, phone: string, password: string) => Promise<{ success: boolean; error?: string; role?: AppRole }>
-  submitProfileWizard: (details: Partial<Student>) => void
+  submitProfileWizard: (details: Record<string, unknown>) => Promise<boolean>
   requestProfileUpdate: (fields: { field: string; newValue: string }[], reason: string) => void
   approveRegistration: (id: string) => Promise<void>
-  rejectRegistration: (id: string, reason?: string) => void
+  rejectRegistration: (id: string, reason?: string) => Promise<void>
+  clearPendingRegistrations: () => Promise<void>
   approveEditRequest: (id: string) => void
   rejectEditRequest: (id: string) => void
   requestMoreInfoEditRequest: (id: string) => void
@@ -280,7 +315,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     try {
       const snapshot = await fetchRegistrySnapshot()
       setStudents((snapshot.students ?? []) as Student[])
-      setPendingRegistrations((snapshot.pendingRegistrations ?? []) as PendingRegistration[])
+      setPendingRegistrations(sortPendingRegistrationsByArrival((snapshot.pendingRegistrations ?? []) as PendingRegistration[]))
       setEditRequests((snapshot.editRequests ?? []) as EditRequest[])
       setAnnouncements((snapshot.announcements ?? []) as Announcement[])
       setEvents((snapshot.events ?? []) as NUKaFsEvent[])
@@ -300,10 +335,18 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           const role = mapSupabaseRole(session.role)
 
           if (session.user) {
-            setCurrentUser(session.user)
-            setCurrentRole(role)
-            writeString(STORAGE_KEYS.role, role)
-            persistToStorage(STORAGE_KEYS.user, session.user)
+            const refreshedUser = await refreshCurrentUser()
+            if (refreshedUser) {
+              setCurrentUser(refreshedUser)
+              setCurrentRole(role)
+              writeString(STORAGE_KEYS.role, role)
+              persistToStorage(STORAGE_KEYS.user, refreshedUser)
+            } else {
+              setCurrentUser(session.user)
+              setCurrentRole(role)
+              writeString(STORAGE_KEYS.role, role)
+              persistToStorage(STORAGE_KEYS.user, session.user)
+            }
           } else {
             setCurrentRole("guest")
             setCurrentUser(null)
@@ -362,6 +405,51 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     restoreState()
   }, [refreshRegistryData])
 
+  const fetchCurrentUserFromApi = useCallback(async (userId: string) => {
+    try {
+      const response = await fetch(`/api/profile?userId=${encodeURIComponent(userId)}`, {
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        return null
+      }
+
+      const payload = await response.json()
+      const rawUser = payload?.user ?? null
+      return rawUser ? normalizeApiUser(rawUser) : null
+    } catch (error) {
+      console.error("Failed to fetch current user from API:", error)
+      return null
+    }
+  }, [])
+
+  const refreshCurrentUser = useCallback(async () => {
+    try {
+      const session = await getCurrentSession()
+      const role = mapSupabaseRole(session.role)
+      let nextUser = session.user
+
+      if (session.user?.id) {
+        const apiUser = await fetchCurrentUserFromApi(session.user.id)
+        if (apiUser) {
+          nextUser = apiUser
+        }
+      }
+
+      setCurrentRole(role)
+      setCurrentUser(nextUser)
+      persistToStorage(STORAGE_KEYS.user, nextUser)
+      writeString(STORAGE_KEYS.role, role)
+      writeString(STORAGE_KEYS.sessionTimestamp, String(Date.now()))
+
+      return nextUser
+    } catch (error) {
+      console.error("Failed to refresh current user session:", error)
+      return null
+    }
+  }, [fetchCurrentUserFromApi])
+
   useEffect(() => {
     if (!isSupabaseEnabled || !supabase) return
 
@@ -369,39 +457,29 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     const tables = ["users", "registrations", "announcements", "events", "opportunities", "edit_requests", "universities"]
     tables.forEach((table) => {
-      channel.on("postgres_changes", { event: "*", schema: "public", table }, () => {
+      channel.on("postgres_changes", { event: "*", schema: "public", table }, async (payload) => {
         void refreshRegistryData()
+
+        if (table === "users" && currentUser?.id) {
+          const payloadRecord = (payload as any)?.record || (payload as any)?.new || (payload as any)?.old
+          const changedUserId = payloadRecord?.id
+          if (changedUserId === currentUser.id) {
+            await refreshCurrentUser()
+          }
+        }
       })
     })
 
     channel.subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      supabase?.removeChannel(channel)
     }
-  }, [refreshRegistryData])
+  }, [currentUser?.id, refreshCurrentUser])
 
   const persistState = (key: (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS], data: unknown) => {
     persistToStorage(key, data)
   }
-
-  const refreshCurrentUser = useCallback(async () => {
-    try {
-      const session = await getCurrentSession()
-      const role = mapSupabaseRole(session.role)
-
-      setCurrentRole(role)
-      setCurrentUser(session.user)
-      persistToStorage(STORAGE_KEYS.user, session.user)
-      writeString(STORAGE_KEYS.role, role)
-      writeString(STORAGE_KEYS.sessionTimestamp, String(Date.now()))
-
-      return session.user
-    } catch (error) {
-      console.error("Failed to refresh current user session:", error)
-      return null
-    }
-  }, [])
 
   const handleSetRole = (role: AppRole) => {
     setCurrentRole(role)
@@ -490,63 +568,190 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }
 
   // Profile Wizard completion
-  const submitProfileWizard = async (details: Partial<Student>) => {
-    if (!currentUser) return
+  const submitProfileWizard = async (details: Record<string, unknown>) => {
+    if (!currentUser) {
+      return false
+    }
 
-    const fullName = details.fullName || currentUser.fullName || currentUser.name || "Unknown Student"
-    const phone = details.phone || currentUser.phone || "+232 76 000 000"
-    const district = (details.district as Student["district"]) || "Koinadugu"
+    const fullName = (details.fullName as string) || currentUser.fullName || currentUser.name || "Unknown Student"
+    const email = (details.email as string) || currentUser.email || ""
+    const phone = (details.phone as string) || currentUser.phone || ""
+    const district = (details.district as string) || "Koinadugu"
+    const employmentStatus = (details.employmentStatus as string) || "Student"
 
     try {
-      await createRegistration({
+      const profileUpdatePayload: Record<string, unknown> = {
+        fullName,
+        email,
+        phone,
+        gender: details.gender as string | undefined,
+        dob: details.dob as string | undefined,
+        nationality: details.nationality as string | undefined,
+        district,
+        chiefdom: details.chiefdom as string | undefined,
+        town: details.town as string | undefined,
+        homeAddress: details.homeAddress as string | undefined,
+        currentAddress: details.currentAddress as string | undefined,
+        university: details.university as string | undefined,
+        campus: details.campus as string | undefined,
+        college: details.college as string | undefined,
+        faculty: details.faculty as string | undefined,
+        department: details.department as string | undefined,
+        courseName: details.course as string | undefined,
+        academicLevel: details.level as string | undefined,
+        studentId: details.studentId as string | undefined,
+        admissionYear: details.admissionYear as string | undefined,
+        expectedGraduationYear: (details.expectedGradYear as string) || (details.expectedGraduationYear as string | undefined),
+        graduationYear: details.graduationYear as string | undefined,
+        occupation: details.occupation as string | undefined,
+        organization: details.organization as string | undefined,
+        biography: (details.bio as string | undefined) || (details.biography as string | undefined),
+        skills: details.skills as string[] | undefined,
+        emergencyContact:
+          details.emergencyContact ??
+          {
+            name: (details.emergencyName as string | undefined),
+            relationship: (details.emergencyRelation as string | undefined),
+            phone: (details.emergencyPhone as string | undefined),
+          },
+        employmentStatus,
+        status: "pending",
+        profileCompletion: (details.profileCompletion as number) ?? 100,
+      }
+
+      const profileResponse = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser.id, profile: profileUpdatePayload }),
+      })
+
+      if (!profileResponse.ok) {
+        const profileError = await profileResponse.json().catch(() => ({}))
+        throw new Error(profileError.error || "Failed to save profile data before registration")
+      }
+
+      const registration = {
         user_id: currentUser.id,
         full_name: fullName,
-        email: currentUser.email,
+        email,
         phone,
         district,
         submitted_date: new Date().toISOString().split("T")[0],
         status: "pending",
-      })
-    } catch (error) {
-      console.error("Unable to create pending registration:", error)
-    }
+        role: employmentStatus === "Student" ? "student" : "graduate",
+        profile: {
+          ...details,
+          fullName,
+          email,
+          phone,
+          district,
+          employmentStatus,
+        },
+        university: details.university,
+        department: details.department,
+        course: details.course,
+        level: details.level,
+        employment_status: employmentStatus,
+      }
 
-    const pendingRegistration: PendingRegistration = {
-      id: `pr_${Date.now()}`,
-      fullName,
-      name: fullName,
-      email: currentUser.email,
-      phone,
-      district,
-      submittedDate: new Date().toISOString().split("T")[0],
-      status: "pending",
-      role: (details.employmentStatus === "Student" ? "student" : "graduate") as "student" | "graduate",
-      profile: {
-        ...details,
+      await createRegistration(registration)
+      await refreshRegistryData()
+
+      const pendingRegistration: PendingRegistration = {
+        id: `pr_${Date.now()}`,
         fullName,
-        email: currentUser.email,
+        name: fullName,
+        email,
         phone,
         district,
-      },
-      university: details.university,
-      department: details.department,
-      course: details.course,
-      level: details.level,
-      employmentStatus: details.employmentStatus || "Student",
+        submittedDate: new Date().toISOString().split("T")[0],
+        status: "pending",
+        role: (details.employmentStatus === "Student" ? "student" : "graduate") as "student" | "graduate",
+        profile: {
+          ...details,
+          fullName,
+          email,
+          phone,
+          district,
+          employmentStatus,
+        },
+        university: details.university,
+        department: details.department,
+        course: details.course,
+        level: details.level,
+        employmentStatus,
+      }
+
+      const updatedPending = [...pendingRegistrations, pendingRegistration]
+      setPendingRegistrations(updatedPending)
+      persistToStorage(STORAGE_KEYS.pending, updatedPending)
+
+      const updatedUser = {
+        ...currentUser,
+        fullName,
+        email,
+        phone,
+        gender: (details.gender as string | undefined) ?? currentUser.gender,
+        dob: (details.dob as string | undefined) ?? currentUser.dob,
+        nationality: (details.nationality as string | undefined) ?? currentUser.nationality,
+        district,
+        chiefdom: (details.chiefdom as string | undefined) ?? currentUser.chiefdom,
+        town: (details.town as string | undefined) ?? currentUser.town,
+        homeAddress: (details.homeAddress as string | undefined) ?? currentUser.homeAddress,
+        currentAddress: (details.currentAddress as string | undefined) ?? currentUser.currentAddress,
+        university: (details.university as string | undefined) ?? currentUser.university,
+        campus: (details.campus as string | undefined) ?? currentUser.campus,
+        college: (details.college as string | undefined) ?? currentUser.college,
+        faculty: (details.faculty as string | undefined) ?? currentUser.faculty,
+        department: (details.department as string | undefined) ?? currentUser.department,
+        courseName: (details.course as string | undefined) ?? currentUser.courseName,
+        academicLevel: (details.level as string | undefined) ?? currentUser.academicLevel,
+        studentId: (details.studentId as string | undefined) ?? currentUser.studentId,
+        admissionYear: (details.admissionYear as string | undefined) ?? currentUser.admissionYear,
+        expectedGraduationYear: (details.expectedGradYear as string | undefined) || (details.expectedGraduationYear as string | undefined) || currentUser.expectedGraduationYear,
+        graduationYear: (details.graduationYear as string | undefined) ?? currentUser.graduationYear,
+        occupation: (details.occupation as string | undefined) ?? currentUser.occupation,
+        organization: (details.organization as string | undefined) ?? currentUser.organization,
+        biography: (details.bio as string | undefined) || (details.biography as string | undefined) || currentUser.biography,
+        skills: (details.skills as string[] | undefined) ?? currentUser.skills,
+        emergencyContact:
+          details.emergencyContact ??
+          currentUser.emergencyContact ??
+          {
+            name: (details.emergencyName as string | undefined),
+            relationship: (details.emergencyRelation as string | undefined),
+            phone: (details.emergencyPhone as string | undefined),
+          },
+        employmentStatus,
+        status: "pending",
+        role: "student_pending",
+        profileCompletion: (details.profileCompletion as number | undefined) ?? currentUser.profileCompletion ?? 100,
+      }
+
+      setCurrentUser(updatedUser)
+      persistToStorage(STORAGE_KEYS.user, updatedUser)
+      setCurrentRole("student_pending")
+      writeString(STORAGE_KEYS.role, "student_pending")
+
+      await refreshCurrentUser()
+
+      addAuditLogEntry(fullName, "completed profile setup", "Student Registry", "update")
+      addNotification(
+        "Application Submitted",
+        "Your profile has been submitted for review. You will receive your digital identity once approved.",
+        "success",
+      )
+
+      return true
+    } catch (error) {
+      console.error("Unable to complete registration wizard:", error)
+      addNotification(
+        "Registration Error",
+        error instanceof Error ? error.message : "Unable to submit your registration.",
+        "error",
+      )
+      return false
     }
-
-    const updatedPending = [pendingRegistration, ...pendingRegistrations]
-    setPendingRegistrations(updatedPending)
-    persistToStorage(STORAGE_KEYS.pending, updatedPending)
-
-    const updatedUser = { ...currentUser, fullName, phone, status: "pending", role: "student_pending" }
-    setCurrentUser(updatedUser)
-    persistToStorage(STORAGE_KEYS.user, updatedUser)
-    setCurrentRole("student_pending")
-    writeString(STORAGE_KEYS.role, "student_pending")
-
-    addAuditLogEntry(fullName, "completed profile setup", "Student Registry", "update")
-    addNotification("Application Submitted", "Your profile has been submitted for review. You will receive your digital identity once approved.", "success")
   }
 
   // Direct profile edit (no approval workflow)
@@ -603,7 +808,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       addAuditLogEntry(
         currentUser.fullName || currentUser.name || "User",
         "updated profile directly",
-        `${fields.length} field(s)` ,
+        `${fields.length} field(s)`,
         "update"
       )
       addNotification(
@@ -621,6 +826,34 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const clearPendingRegistrations = async () => {
+    try {
+      const response = await fetch("/api/registrations", {
+        method: "DELETE",
+      })
+
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok || result.success === false) {
+        throw new Error(result.message || "Failed to clear pending registrations")
+      }
+
+      setPendingRegistrations([])
+      persistToStorage(STORAGE_KEYS.pending, [])
+      await refreshRegistryData()
+
+      const actor = currentUser ? (currentUser.name || currentUser.fullName) : "Executive"
+      addAuditLogEntry(actor, "cleared all pending registrations", "All pending requests", "delete")
+      addNotification("Pending Registrations Cleared", "All pending registration requests have been deleted.", "success")
+    } catch (error) {
+      console.error("Failed to clear pending registrations:", error)
+      addNotification(
+        "Bulk Delete Failed",
+        error instanceof Error ? error.message : "Unable to delete pending registrations.",
+        "error"
+      )
+    }
+  }
+
   // Executive Operations
   const approveRegistration = async (id: string) => {
     const item = pendingRegistrations.find(p => p.id === id)
@@ -630,7 +863,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const fullName = item.fullName || item.name || String(profile.fullName || "")
     const employmentStatus = String(profile.employmentStatus || item.employmentStatus || "Student")
     const membershipType = employmentStatus === "Student" ? "student" : "student"
-    const targetUserId = String((item as any).user_id ?? (item as any).userId ?? item.id)
+    const targetUserId = String((item as any).user_id ?? (item as any).userId ?? "")
+
+    if (!targetUserId) {
+      addNotification("Approval Failed", `Unable to approve registration for ${fullName} because the linked user account was not found.`, "error")
+      return
+    }
 
     try {
       // Step 1: Call the production membership ID allocation API
@@ -670,10 +908,30 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (!updateRes.ok) {
-        console.error("Failed to update user status:", await updateRes.text())
+        const updateError = await updateRes.json().catch(() => ({}))
+        console.error("Failed to update user status:", updateError)
+        addNotification("Approval Failed", `Account for ${fullName} could not be activated.`, "error")
+        return
       }
 
-      // Step 3: Update local state
+      const response = await fetch("/api/registrations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: item.id,
+          status: "approved",
+          approved_by: currentUser?.id,
+          reviewed_date: new Date().toISOString().split("T")[0],
+        }),
+      })
+
+      if (!response.ok) {
+        const regError = await response.json().catch(() => ({}))
+        console.error("Failed to persist approved registration:", regError)
+        addNotification("Approval Failed", `Could not update registration status for ${fullName}.`, "error")
+        return
+      }
+
       const updatedPending = pendingRegistrations.filter(p => p.id !== id)
       setPendingRegistrations(updatedPending)
       persistToStorage(STORAGE_KEYS.pending, updatedPending)
@@ -684,7 +942,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       addAuditLogEntry(execName, "approved registration", fullName, "approve")
       addNotification(
         "Registration Approved",
-        `Account for ${fullName} has been approved. Membership ID: ${identity.membershipId}. QR code generated and is now permanent.`,
+        `Account for ${fullName} has been approved. Membership ID: ${identity.membershipId}.`,
         "success"
       )
     } catch (error) {
@@ -693,14 +951,32 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const rejectRegistration = (id: string, reason?: string) => {
+  const rejectRegistration = async (id: string, reason?: string) => {
     const item = pendingRegistrations.find(p => p.id === id)
     if (!item) return
+
+    const response = await fetch("/api/registrations", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: item.id,
+        status: "rejected",
+        reviewed_date: new Date().toISOString().split("T")[0],
+        rejection_reason: reason || "Rejected by admin",
+      }),
+    })
+
+    if (!response.ok) {
+      const rejError = await response.json().catch(() => ({}))
+      console.error("Failed to persist rejected registration:", rejError)
+      addNotification("Rejection Failed", `Could not update registration status for ${item.fullName || item.name}.`, "error")
+      return
+    }
 
     const updatedPending = pendingRegistrations.filter(p => p.id !== id)
     setPendingRegistrations(updatedPending)
     persistToStorage(STORAGE_KEYS.pending, updatedPending)
-    void refreshRegistryData()
+    await refreshRegistryData()
 
     const execName = currentUser ? (currentUser.name || currentUser.fullName) : "Executive"
     addAuditLogEntry(execName, `rejected registration${reason ? ` (Reason: ${reason})` : ""}`, item.fullName, "delete")
@@ -1121,6 +1397,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         refreshCurrentUser,
         updateCurrentUserContext,
         isHydrated,
+        clearPendingRegistrations,
         addAuditLogEntry,
         addNotification
       }}

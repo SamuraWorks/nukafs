@@ -51,7 +51,7 @@ export function UserProfileView({
       ]
     : [
         { label: "Email", value: currentUser?.email },
-        { label: "Phone Number", value: currentUser?.phone || "+232 76 000 000" },
+        { label: "Phone Number", value: currentUser?.phone || "+23279630777" },
         { label: "Organization", value: currentUser?.organization || "NUKaFs Secretariat" },
         { label: "Title", value: currentUser?.title || roleLabel },
         { label: "District", value: currentUser?.district || "Koinadugu & Falaba" },

@@ -22,7 +22,7 @@ type PendingRegistration = {
 }
 
 export default function RegistrationApprovalsPage() {
-  const { pendingRegistrations, approveRegistration, rejectRegistration } = useAppState()
+  const { pendingRegistrations, approveRegistration, rejectRegistration, clearPendingRegistrations } = useAppState()
 
   const getDisplayName = (reg: PendingRegistration | null | undefined) => {
     return reg?.fullName || reg?.name || "Unknown Applicant"
@@ -32,6 +32,7 @@ export default function RegistrationApprovalsPage() {
   const [selectedReg, setSelectedReg] = useState<PendingRegistration | null>(null)
   const [dialogAction, setDialogAction] = useState<"approve" | "reject" | "view" | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
   const [rejectReason, setRejectReason] = useState("")
 
   const handleTriggerAction = (reg: PendingRegistration, action: "approve" | "reject" | "view") => {
@@ -40,22 +41,37 @@ export default function RegistrationApprovalsPage() {
     setRejectReason("")
   }
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     if (!selectedReg || !dialogAction) return
 
     setIsProcessing(true)
-    setTimeout(() => {
+
+    try {
       if (dialogAction === "approve") {
-        approveRegistration(selectedReg.id)
+        await approveRegistration(selectedReg.id)
         toast.success(`Approved account for ${getDisplayName(selectedReg)}`)
       } else if (dialogAction === "reject") {
-        rejectRegistration(selectedReg.id, rejectReason || "Does not meet membership eligibility criteria.")
+        await rejectRegistration(selectedReg.id, rejectReason || "Does not meet membership eligibility criteria.")
         toast.warning(`Rejected registration request for ${getDisplayName(selectedReg)}`)
       }
+    } catch (error) {
+      console.error("Registration action failed:", error)
+      toast.error(`Unable to ${dialogAction} this registration. Please try again.`)
+    } finally {
       setIsProcessing(false)
       setSelectedReg(null)
       setDialogAction(null)
-    }, 1200)
+    }
+  }
+
+  const handleClearAll = async () => {
+    if (!window.confirm("Delete all pending registration requests? This action cannot be undone.")) return
+    setIsClearing(true)
+    try {
+      await clearPendingRegistrations()
+    } finally {
+      setIsClearing(false)
+    }
   }
 
   return (
@@ -64,6 +80,18 @@ export default function RegistrationApprovalsPage() {
         title="Pending Registrations"
         description="Verify student identities and approve access requests for NUKaFs Registry."
       />
+      {pendingRegistrations.length > 0 ? (
+        <div className="flex justify-end">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleClearAll}
+            disabled={isClearing}
+          >
+            {isClearing ? "Clearing..." : "Clear All Pending"}
+          </Button>
+        </div>
+      ) : null}
 
       <Card className="border shadow-sm overflow-hidden">
         {pendingRegistrations.length === 0 ? (

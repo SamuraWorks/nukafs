@@ -410,7 +410,7 @@ export default function StakeholderProfileEditor({ backHref = "/stakeholder/prof
           <FieldLabel>Phone Number</FieldLabel>
           <Input
             id="sh-phone"
-            placeholder="+232 76 000 000"
+            placeholder="+23279630777"
             value={form.phone}
             onChange={e => update("phone", e.target.value)}
           />

@@ -125,7 +125,7 @@ export default function RegisterPage() {
                 <Input
                   id="phone"
                   name="phone"
-                  placeholder="e.g. +232 76 000 000"
+                  placeholder="e.g. +23279630777"
                   required
                   value={formData.phone}
                   onChange={handleChange}

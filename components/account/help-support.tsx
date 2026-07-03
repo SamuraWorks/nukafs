@@ -60,10 +60,10 @@ export function HelpSupportPage({
             </div>
             <h3 className="text-sm font-bold">Email Support</h3>
             <a
-              href="mailto:secretariat@NUKaFs.org"
+              href="mailto:syscend@gmail.com"
               className="text-xs text-primary hover:underline"
             >
-              secretariat@NUKaFs.org
+              syscend@gmail.com
             </a>
           </CardContent>
         </Card>
@@ -73,8 +73,8 @@ export function HelpSupportPage({
               <Phone className="size-5" />
             </div>
             <h3 className="text-sm font-bold">Phone Support</h3>
-            <a href="tel:+23276000000" className="text-xs text-primary hover:underline">
-              +232 76 000 000
+            <a href="tel:+23279630777" className="text-xs text-primary hover:underline">
+              +23279630777
             </a>
           </CardContent>
         </Card>

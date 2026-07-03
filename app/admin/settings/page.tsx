@@ -37,9 +37,9 @@ export default function SystemSettingsPage() {
   const [general, setGeneral] = useState({
     systemName: systemSettings.systemName,
     systemDescription: systemSettings.systemDescription,
-    supportEmail: "support@NUKaFs.org",
-    supportPhone: "+232 76 000 000",
-    website: "https://NUKaFs.org",
+    supportEmail: systemSettings.supportEmail ?? "syscend@gmail.com",
+    supportPhone: systemSettings.supportPhone ?? "+23279630777",
+    website: systemSettings.website ?? "https://NUKaFs.org",
   })
 
   const [registration, setRegistration] = useState({

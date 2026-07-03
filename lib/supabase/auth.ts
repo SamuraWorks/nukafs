@@ -111,7 +111,7 @@ function buildAuthenticatedUser(
 
   return {
     id: authUser.id,
-    email: authUser.email ?? normalizeString(profileData?.email) ?? "",
+    email: normalizeString(profileData?.email ?? authUser.email) ?? "",
     phone: normalizeString(profileData?.phone ?? authUser.phone) ?? undefined,
     fullName,
     name: fullName,
@@ -207,12 +207,15 @@ async function loadAuthenticatedUserProfile(
     // Try to fetch via API to bypass RLS cache/policy issues in browser
     if (typeof window !== "undefined") {
       try {
-        const res = await fetch(`/api/profile/me?userId=${authUser.id}`)
+        const res = await fetch(`/api/profile?userId=${authUser.id}`)
         if (res.ok) {
-           const { user } = await res.json()
-           if (user) {
-             return buildAuthenticatedUser(authUser, user)
-           }
+          const data = await res.json().catch(() => ({}))
+          if (data.success && data.user) {
+            return buildAuthenticatedUser(authUser, data.user)
+          }
+          if (data.user) {
+            return buildAuthenticatedUser(authUser, data.user)
+          }
         }
       } catch (e) {
         console.error("Fallback API fetch failed", e)

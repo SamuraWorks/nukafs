@@ -332,8 +332,8 @@ export function Contact() {
             Questions about membership, approvals or opportunities? Send us a message and an executive will respond.
           </p>
           <div className="flex flex-col gap-3 text-sm">
-            <p><span className="font-medium">Email:</span> registry@NUKaFs.org</p>
-            <p><span className="font-medium">Phone:</span> +232 76 000 000</p>
+            <p><span className="font-medium">Email:</span> syscend@gmail.com</p>
+            <p><span className="font-medium">Phone:</span> +23279630777</p>
             <p><span className="font-medium">Office:</span> Kabala, Koinadugu District, Sierra Leone</p>
           </div>
         </div>

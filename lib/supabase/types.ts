@@ -60,6 +60,13 @@ export interface SupabaseRegistration {
   approved_by?: string
   reviewed_date?: string
   rejection_reason?: string
+  role?: string
+  profile?: Record<string, unknown>
+  university?: string
+  department?: string
+  course?: string
+  level?: string
+  employment_status?: string
   created_at?: string
 }
 

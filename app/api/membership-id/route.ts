@@ -130,25 +130,37 @@ export async function POST(request: NextRequest) {
       .eq("user_id", userId)
       .single()
 
-    if (!existingError || existingIdentity) {
-      // User already has an identity - return the existing one (permanent)
-      if (existingIdentity) {
-        return NextResponse.json(
-          {
-            success: true,
-            identity: {
-              membershipId: existingIdentity.membership_id,
-              verificationToken: existingIdentity.verification_token,
-              verificationUrl: existingIdentity.verification_url,
-              qrCodeData: existingIdentity.qr_code_data,
-              createdAt: existingIdentity.created_at,
-            },
-            isExisting: true,
-            message: "User already has a permanent membership identity",
+    if (existingError && existingError.code !== "PGRST116") {
+      throw existingError
+    }
+
+    if (existingIdentity) {
+      await supabase
+        .from("users")
+        .update({
+          membership_number: existingIdentity.membership_id,
+          qr_code: existingIdentity.qr_code_data,
+          qr_code_status: "active",
+          membership_type: existingIdentity.membership_type,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", userId)
+
+      return NextResponse.json(
+        {
+          success: true,
+          identity: {
+            membershipId: existingIdentity.membership_id,
+            verificationToken: existingIdentity.verification_token,
+            verificationUrl: existingIdentity.verification_url,
+            qrCodeData: existingIdentity.qr_code_data,
+            createdAt: existingIdentity.created_at,
           },
-          { status: 200 }
-        )
-      }
+          isExisting: true,
+          message: "User already has a permanent membership identity",
+        },
+        { status: 200 }
+      )
     }
 
     // Use RPC function to atomically increment counter and get next ID

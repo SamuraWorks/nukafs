@@ -182,7 +182,14 @@ export function DashboardShell({
                           isActive={active}
                           tooltip={item.title}
                           render={
-                            <Link href={item.href}>
+                            <Link
+                              href={item.href}
+                              onClick={() => {
+                                if (typeof window !== "undefined") {
+                                  window.dispatchEvent(new Event("closeSidebarMobile"))
+                                }
+                              }}
+                            >
                               <item.icon />
                               <span>{item.title}</span>
                               {item.badge && (

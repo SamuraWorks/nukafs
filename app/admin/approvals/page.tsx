@@ -13,24 +13,46 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from "sonner"
 
 export default function ApprovalsPage() {
-  const { pendingRegistrations, approveRegistration, rejectRegistration } = useAppState()
+  const { pendingRegistrations, approveRegistration, rejectRegistration, clearPendingRegistrations } = useAppState()
   const [users, setUsers] = useState(pendingRegistrations)
   const [searchQuery, setSearchQuery] = useState("")
+  const [isClearing, setIsClearing] = useState(false)
 
   useEffect(() => {
     setUsers(pendingRegistrations)
   }, [pendingRegistrations])
 
-  const handleApprove = (id: string) => {
-    approveRegistration(id)
-    setUsers(users.filter(user => user.id !== id))
-    toast.success("User account approved successfully.")
+  const handleApprove = async (id: string) => {
+    try {
+      await approveRegistration(id)
+      setUsers((prev) => prev.filter((user) => user.id !== id))
+      toast.success("User account approved successfully.")
+    } catch (error) {
+      console.error("Approval failed:", error)
+      toast.error("Failed to approve user. Please try again.")
+    }
   }
 
-  const handleReject = (id: string) => {
-    rejectRegistration(id)
-    setUsers(users.filter(user => user.id !== id))
-    toast.error("User account rejected.")
+  const handleReject = async (id: string) => {
+    try {
+      await rejectRegistration(id)
+      setUsers((prev) => prev.filter((user) => user.id !== id))
+      toast.error("User account rejected.")
+    } catch (error) {
+      console.error("Rejection failed:", error)
+      toast.error("Failed to reject user. Please try again.")
+    }
+  }
+
+  const handleClearAll = async () => {
+    if (!window.confirm("Delete all pending registration requests? This action cannot be undone.")) return
+    setIsClearing(true)
+    try {
+      await clearPendingRegistrations()
+      setUsers([])
+    } finally {
+      setIsClearing(false)
+    }
   }
 
   const filteredUsers = users.filter(user => 
@@ -40,13 +62,23 @@ export default function ApprovalsPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Account Approvals</h2>
           <p className="text-muted-foreground">
             Review and manage new student registration requests.
           </p>
         </div>
+        {pendingRegistrations.length > 0 ? (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleClearAll}
+            disabled={isClearing}
+          >
+            {isClearing ? "Clearing..." : "Clear All Pending"}
+          </Button>
+        ) : null}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -127,11 +159,11 @@ export default function ApprovalsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="outline" className="text-green-600 hover:text-green-700 border-green-200 bg-green-50 hover:bg-green-100" onClick={() => handleApprove(user.id)}>
+                          <Button size="sm" variant="outline" className="text-green-600 hover:text-green-700 border-green-200 bg-green-50 hover:bg-green-100" onClick={() => void handleApprove(user.id)}>
                             <Check className="size-4 mr-1" />
                             Approve
                           </Button>
-                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 border-red-200 bg-red-50 hover:bg-red-100" onClick={() => handleReject(user.id)}>
+                          <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 border-red-200 bg-red-50 hover:bg-red-100" onClick={() => void handleReject(user.id)}>
                             <X className="size-4 mr-1" />
                             Reject
                           </Button>

@@ -67,8 +67,8 @@ export default function Error({
         <div className="mt-12 pt-6 border-t border-border">
           <p className="text-xs text-muted-foreground">
             NUKaFs Registry — If this error persists, contact{" "}
-            <a href="mailto:support@NUKaFs.org" className="text-primary underline">
-              support@NUKaFs.org
+            <a href="mailto:syscend@gmail.com" className="text-primary underline">
+              syscend@gmail.com
             </a>
           </p>
         </div>
