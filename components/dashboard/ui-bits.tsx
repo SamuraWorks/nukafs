@@ -4,7 +4,7 @@ import type { ReactNode } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import type { MembershipStatus, RequestStatus } from "@/lib/mock-data"
+import type { MembershipStatus, RequestStatus } from "@/lib/types/registry"
 
 export function PageHeader({
   title,

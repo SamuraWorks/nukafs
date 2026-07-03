@@ -1,6 +1,6 @@
 import { ShieldCheck, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { MembershipStatus } from "@/lib/mock-data"
+import type { MembershipStatus } from "@/lib/types/registry"
 
 function formatStatusLabel(status: MembershipStatus) {
   switch (status) {

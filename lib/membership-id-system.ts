@@ -74,7 +74,7 @@ export function generateVerificationToken(): string {
 const DEFAULT_VERIFICATION_ORIGIN =
   process.env.NEXT_PUBLIC_APP_URL ??
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ??
-  (typeof window !== "undefined" ? window.location.origin : "https://registry.nukafs-sl.org")
+  (typeof window !== "undefined" ? window.location.origin : "https://nukafs.vercel.app")
 
 export function generateQrCodeData(
   verificationToken: string,

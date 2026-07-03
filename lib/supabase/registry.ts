@@ -1,6 +1,6 @@
 import { ensureSupabaseClient } from "@/lib/supabase/client"
 import type { SupabaseFetchResult, SupabaseRegistration } from "@/lib/supabase/types"
-import type { PendingRegistration } from "@/lib/mock-data"
+import type { PendingRegistration } from "@/lib/types/registry"
 
 const DEFAULT_PAGE_SIZE = 25
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Filter, SlidersHorizontal, Eye, ShieldAlert, ShieldCheck, Mail, Phone, MapPin, Calendar, BookOpen, Briefcase, HeartHandshake, UserPlus, AlertTriangle, Ban, CheckCircle } from "lucide-react"
+import { Search, Filter, SlidersHorizontal, Eye, ShieldAlert, ShieldCheck, Mail, Phone, MapPin, Calendar, BookOpen, Briefcase, HeartHandshake, UserPlus, AlertTriangle, Ban, CheckCircle, Download } from "lucide-react"
 import { useAppState } from "@/lib/context/app-state-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -19,8 +19,8 @@ import {
   DISTRICTS, 
   CHIEFDOMS,
   LEVELS,
-  Student 
-} from "@/lib/mock-data"
+} from "@/lib/constants/registry"
+import type { Student } from "@/lib/types/registry"
 
 export default function StudentManagementPage() {
   const { students, editRequests, suspendStudent, reactivateStudent } = useAppState()
@@ -42,6 +42,7 @@ export default function StudentManagementPage() {
   
   // Confirmation state
   const [confirmAction, setConfirmAction] = useState<{ id: string; action: "suspend" | "reactivate" } | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Find the selected student from state dynamically so UI updates immediately
   const selectedStudent = students.find(s => s.id === selectedStudentId) || null
@@ -102,6 +103,64 @@ export default function StudentManagementPage() {
       toast.success(`Reactivated account for ${name}`)
     }
     setConfirmAction(null)
+  }
+
+  const downloadBlob = (content: string, fileName: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.download = fileName
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportStudentDirectory = (format: "csv" | "xlsx" | "pdf") => {
+    setIsExporting(true)
+
+    if (format === "pdf") {
+      window.print()
+      setIsExporting(false)
+      return
+    }
+
+    const headers = [
+      "Full Name",
+      "Membership Number",
+      "University",
+      "Department",
+      "Level",
+      "Status",
+      "Phone",
+      "Email",
+      "District",
+      "Chiefdom",
+    ]
+
+    const rows = filteredStudents.map((student) => [
+      student.fullName ?? student.name ?? "",
+      student.membershipNumber ?? "",
+      student.university ?? "",
+      student.department ?? "",
+      student.level ?? "",
+      student.status ?? "",
+      student.phone ?? "",
+      student.email ?? "",
+      student.district ?? "",
+      student.chiefdom ?? "",
+    ]
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
+
+    const content = [headers.join(","), ...rows].join("\n")
+    const fileName = `nukafs-student-directory.${format}`
+    const mimeType = format === "csv"
+      ? "text/csv;charset=utf-8"
+      : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    downloadBlob(content, fileName, mimeType)
+    setIsExporting(false)
   }
 
   return (
@@ -237,19 +296,133 @@ export default function StudentManagementPage() {
 
         {/* MAIN DATA TABLE */}
         <div className="lg:col-span-9 flex flex-col gap-4">
-          <InputGroup className="w-full">
-            <InputGroupAddon>
-              <Search className="size-4 text-muted-foreground" />
-            </InputGroupAddon>
-            <InputGroupInput 
-              placeholder="Search by student name, ID, phone, email, skills..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </InputGroup>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <InputGroup className="w-full sm:max-w-md">
+              <InputGroupAddon>
+                <Search className="size-4 text-muted-foreground" />
+              </InputGroupAddon>
+              <InputGroupInput 
+                placeholder="Search by student name, ID, phone, email, skills..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </InputGroup>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => exportStudentDirectory("pdf")}
+                disabled={isExporting}
+              >
+                <Download className="size-4" />
+                Preview PDF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => exportStudentDirectory("csv")}
+                disabled={isExporting}
+              >
+                <Download className="size-4" />
+                CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => exportStudentDirectory("xlsx")}
+                disabled={isExporting}
+              >
+                <Download className="size-4" />
+                Excel
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3 lg:hidden">
+            {filteredStudents.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-muted p-6 text-center text-xs text-muted-foreground">
+                No student records match your criteria.
+              </div>
+            ) : (
+              filteredStudents.map((student) => (
+                <div key={student.id} className="rounded-3xl border bg-card p-4 shadow-sm">
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="grid h-14 w-14 shrink-0 place-items-center rounded-3xl font-bold text-white"
+                      style={{ backgroundColor: student.avatarColor || "#4f46e5" }}
+                    >
+                      {String(student.fullName || student.name || "NU").split(" ")
+                        .map((part) => part[0])
+                        .slice(0, 2)
+                        .join("")}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-semibold text-foreground truncate">{student.fullName || student.name}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate">{student.membershipNumber}</p>
+                      </div>
+                      <div className="mt-3 grid gap-2 text-[11px] text-muted-foreground">
+                        <div className="flex justify-between gap-2">
+                          <span>University</span>
+                          <span className="truncate text-right text-foreground">{student.university?.split(" (")[0] ?? "—"}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span>Department</span>
+                          <span className="truncate text-right text-foreground">{student.department ?? "—"}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span>Level</span>
+                          <span className="truncate text-right text-foreground">{student.level ?? "—"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => {
+                        setSelectedStudentId(student.id)
+                        setActiveTab("profile")
+                      }}
+                    >
+                      <Eye className="size-4" />
+                      View
+                    </Button>
+                    {student.status === "active" ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-destructive"
+                        onClick={() => handleActionClick(student.id || "", "suspend")}
+                      >
+                        <Ban className="size-4" />
+                        Suspend
+                      </Button>
+                    ) : student.status === "suspended" ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-emerald-500"
+                        onClick={() => handleActionClick(student.id || "", "reactivate")}
+                      >
+                        <CheckCircle className="size-4" />
+                        Reactivate
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
           <Card className="border shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="hidden lg:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">

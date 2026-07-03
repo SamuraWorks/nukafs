@@ -899,11 +899,11 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-xl border p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Membership ID</p>
-                  <p className="mt-2 font-mono font-semibold text-foreground">{currentUser?.membershipNumber || "Pending assignment"}</p>
+                  <p className="mt-2 font-mono font-semibold text-foreground">{currentUser?.membershipNumber || currentUser?.membershipId || "Pending assignment"}</p>
                 </div>
                 <div className="rounded-xl border p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">QR Code</p>
-                  <p className="mt-2 font-mono font-semibold text-foreground">{currentUser?.qrCode || "Pending assignment"}</p>
+                  <p className="mt-2 font-mono font-semibold text-foreground">{currentUser?.qrCode || currentUser?.permanentQrCode || "Pending assignment"}</p>
                 </div>
                 <div className="rounded-xl border p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Membership Type</p>

@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-import { verifyMembershipQRData } from '@/lib/membership-identity'
 import { Card, CardContent } from '@/components/ui/card'
 import { CheckCircle2, AlertCircle } from 'lucide-react'
+import { memberService } from '@/lib/services/registry-service'
 
 interface VerifiedMember {
   membershipId: string
@@ -38,45 +37,28 @@ export default function VerifyMembershipPage() {
 
     const verify = async () => {
       try {
-        if (qrData) {
-          const verification = verifyMembershipQRData(qrData)
-          if (!verification.valid) {
-            setError(verification.error || 'Invalid QR code')
-            setIsLoading(false)
-            return
-          }
+        const identifier = qrData?.trim() || membershipId?.trim()
+        if (!identifier) {
+          setError('No valid QR code or membership identifier was provided.')
+          setIsLoading(false)
+          return
         }
 
-        if (membershipId) {
-          const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-          )
-
-          const { data, error: queryError } = await supabase
-            .from('users')
-            .select('id, full_name, email, role, membership_number, date_issued, university')
-            .eq('membership_number', membershipId)
-            .maybeSingle()
-
-          if (queryError) {
-            setError('Membership not found')
-            setIsLoading(false)
-            return
-          }
-
-          if (data) {
-            setVerifiedMember({
-              membershipId: data.membership_number,
-              fullName: data.full_name,
-              email: data.email,
-              role: data.role,
-              university: data.university,
-              dateIssued: data.date_issued,
-            })
-          }
+        const profile = await memberService.verifyMembership(identifier)
+        if (!profile) {
+          setError('Membership not found or verification failed.')
+          setIsLoading(false)
+          return
         }
 
+        setVerifiedMember({
+          membershipId: profile.membershipId,
+          fullName: profile.fullName,
+          email: profile.email,
+          role: profile.currentRole,
+          university: profile.university,
+          dateIssued: profile.dateIssued,
+        })
         setIsLoading(false)
       } catch (err: any) {
         setError(err.message || 'Verification failed')
@@ -87,13 +69,7 @@ export default function VerifyMembershipPage() {
     verify()
   }, [qrData, membershipId, queryLoaded])
 
-  const roleLabel = {
-    student: 'Student Member',
-    executive: 'Executive Member',
-    admin: 'Administrator',
-    stakeholder: 'Stakeholder Partner',
-    super_admin: 'Super Administrator',
-  }[verifiedMember?.role || ''] || verifiedMember?.role
+  const roleLabel = verifiedMember?.role || ''
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">

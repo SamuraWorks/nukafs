@@ -3,10 +3,39 @@ import { STORAGE_KEYS } from "@/lib/constants/storage-keys"
 import { fetchStudentByIdentifier } from "@/lib/supabase/registry"
 import { extractVerificationToken } from "@/lib/membership-id-system"
 import { memberToVerifiedProfile, type VerifiedMemberProfile } from "@/lib/membership"
-import { stats, membersByUniversity, membersByCourse, membersByDepartment, membersByLevel, membersByGender, membersByDistrict, membersByChiefdom, registrationTrend, employmentStats, topSkills, scholarshipRequests } from "@/lib/mock-data"
-import type { Student } from "@/lib/mock-data"
+import type { Student } from "@/lib/types/registry"
 
-/** Data-access layer — production-ready Supabase-backed registry helper */
+function countBy<T>(items: readonly T[], keyFn: (item: T) => string | undefined) {
+  return items.reduce<Record<string, number>>((result, item) => {
+    const key = keyFn(item)
+    if (!key) return result
+    result[key] = (result[key] ?? 0) + 1
+    return result
+  }, {})
+}
+
+function toChartData(counts: Record<string, number>) {
+  return Object.entries(counts).map(([name, value]) => ({ name, value }))
+}
+
+function formatMonthKey(value?: string): string | null {
+  if (!value) return null
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return null
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}`
+}
+
+function buildTrendData(students: Student[]) {
+  const counts: Record<string, number> = {}
+  students.forEach((student) => {
+    const key = formatMonthKey(student.joinedDate ?? student.joined_date)
+    if (!key) return
+    counts[key] = (counts[key] ?? 0) + 1
+  })
+  return Object.entries(counts)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, value]) => ({ month, members: value }))
+}
 
 export const registryService = {
   getStudents() {
@@ -98,61 +127,84 @@ export const memberService = {
 }
 
 export const analyticsService = {
-  getSummary() {
-    return stats
+  getSummary(students: Student[]) {
+    const distribution = countBy(students, (student) => String(student.status ?? student.membership_status ?? "").toLowerCase())
+    return {
+      total: students.length,
+      active: distribution.active ?? 0,
+      pending: distribution.pending ?? 0,
+      suspended: distribution.suspended ?? 0,
+      expired: distribution.expired ?? 0,
+    }
   },
 
-  getMembersByUniversity() {
-    return membersByUniversity
+  getMembersByUniversity(students: Student[]) {
+    return toChartData(countBy(students, (student) => student.university?.trim() || "Unknown"))
   },
 
-  getMembersByCourse() {
-    return membersByCourse
+  getMembersByCourse(students: Student[]) {
+    return toChartData(countBy(students, (student) => student.course?.trim() || "Unknown"))
   },
 
-  getMembersByDepartment() {
-    return membersByDepartment
+  getMembersByDepartment(students: Student[]) {
+    return toChartData(countBy(students, (student) => student.department?.trim() || "Unknown"))
   },
 
-  getMembersByLevel() {
-    return membersByLevel
+  getMembersByLevel(students: Student[]) {
+    return toChartData(countBy(students, (student) => student.level?.trim() || "Unknown"))
   },
 
-  getMembersByGender() {
-    return membersByGender
+  getMembersByGender(students: Student[]) {
+    return toChartData(countBy(students, (student) => student.gender?.trim() || "Unknown"))
   },
 
-  getMembersByDistrict() {
-    return membersByDistrict
+  getMembersByDistrict(students: Student[]) {
+    return toChartData(countBy(students, (student) => student.district?.trim() || "Unknown"))
   },
 
-  getMembersByChiefdom() {
-    return membersByChiefdom
+  getMembersByChiefdom(students: Student[]) {
+    return toChartData(countBy(students, (student) => student.chiefdom?.trim() || "Unknown"))
   },
 
-  getRegistrationTrend() {
-    return registrationTrend
+  getRegistrationTrend(students: Student[]) {
+    return buildTrendData(students)
   },
 
-  getEmploymentStats() {
-    return employmentStats
+  getEmploymentStats(students: Student[]) {
+    return toChartData(countBy(students, (student) => student.employmentStatus?.trim() || "Unknown"))
   },
 
-  getTopSkills() {
-    return topSkills
+  getTopSkills(students: Student[]) {
+    const counts: Record<string, number> = {}
+    students.forEach((student) => {
+      const skills = Array.isArray(student.skills) ? student.skills : []
+      skills.forEach((skill) => {
+        const name = String(skill).trim()
+        if (!name) return
+        counts[name] = (counts[name] ?? 0) + 1
+      })
+    })
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([name, value]) => ({ name, value }))
   },
 
-  getScholarshipRequests() {
-    return scholarshipRequests
+  getScholarshipRequests(students: Student[]) {
+    const requested = students.filter((student) => Boolean(student.scholarshipApplicant ?? student.scholarship_applicant)).length
+    return [
+      { name: "Requested", value: requested },
+      { name: "Not Requested", value: Math.max(0, students.length - requested) },
+    ]
   },
 
   getMembershipBreakdown(students: Student[]) {
     return {
       total: students.length,
-      active: students.filter((s) => s.status === "active").length,
-      pending: students.filter((s) => s.status === "pending").length,
-      suspended: students.filter((s) => s.status === "suspended").length,
-      expired: students.filter((s) => s.status === "expired").length,
+      active: students.filter((s) => String(s.status ?? s.membership_status).toLowerCase() === "active").length,
+      pending: students.filter((s) => String(s.status ?? s.membership_status).toLowerCase() === "pending").length,
+      suspended: students.filter((s) => String(s.status ?? s.membership_status).toLowerCase() === "suspended").length,
+      expired: students.filter((s) => String(s.status ?? s.membership_status).toLowerCase() === "expired").length,
     }
   },
 }

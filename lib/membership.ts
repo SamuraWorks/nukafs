@@ -1,4 +1,4 @@
-import type { MembershipIdentityStatus, MembershipStatus, Student } from "@/lib/mock-data"
+import type { MembershipIdentityStatus, MembershipStatus, Student } from "@/lib/types/registry"
 
 export type MemberRole =
   | "Student"
@@ -134,10 +134,15 @@ export function memberToVerifiedProfile(user: any, role?: string): VerifiedMembe
   const profilePhotoUrl = pickValue<string>(user, ["profilePhotoUrl", "profile_photo_url", "profilePhoto", "profile_photo"], undefined)
   const dateIssued = pickValue<string>(user, ["dateIssued", "joinedDate", "createdAt", "date_issued"], new Date().toISOString().split("T")[0]) ?? new Date().toISOString().split("T")[0]
   const status = (pickValue<MembershipStatus>(user, ["status", "membershipStatus", "membership_status"], "active") ?? "active") as MembershipStatus
+  const explicitMembershipType = pickValue<string>(user, ["membershipType", "membership_type"], undefined)
   const membershipType: MembershipType =
-    role === "stakeholder" || pickValue<string>(user, ["role", "userRole"], undefined) === "stakeholder"
+    explicitMembershipType === "Stakeholder" || explicitMembershipType === "Stakeholder"
+      ? "Stakeholder"
+      : role === "stakeholder" || pickValue<string>(user, ["role", "userRole"], undefined) === "stakeholder"
       ? "Stakeholder"
       : pickValue<string>(user, ["employmentStatus", "employment_status"], undefined) === "Student"
+      ? "Student"
+      : role === "super_admin" || role === "executive"
       ? "Student"
       : "Graduate/Alumnus"
   const currentRole: MemberRole =
@@ -237,7 +242,7 @@ export function getVerifyUrl(membershipNumber: string, origin?: string): string 
     origin ??
     (typeof window !== "undefined"
       ? window.location.origin
-      : "https://registry.nukafs-sl.org")
+      : "https://nukafs.vercel.app")
 
   return `${base}/verify/${value}`
 }

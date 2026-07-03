@@ -11,7 +11,7 @@ import {
   TeamMember,
   Opportunity,
   RequestStatus,
-} from "@/lib/mock-data"
+} from "@/lib/types/registry"
 import { STORAGE_KEYS } from "@/lib/constants/storage-keys"
 import {
   readStorage,
@@ -127,7 +127,7 @@ function mapSupabaseRole(role: string | undefined): AppRole {
   }
 }
 
-function normalizeApiUser(user: Record<string, any>) {
+function normalizeApiUser(user: Record<string, any>): any {
   if (!user) return user
 
   return {
@@ -136,8 +136,11 @@ function normalizeApiUser(user: Record<string, any>) {
     name: user.full_name ?? user.fullName ?? user.name,
     profilePhotoUrl: user.profile_photo_url ?? user.profilePhotoUrl,
     profilePhotoPath: user.profile_photo ?? user.profilePhotoPath,
-    membershipNumber: user.membership_number ?? user.membershipNumber,
+    id: user.id ?? user.user_id ?? user.userId,
+    email: user.email ?? user.mail ?? user.userEmail,
+    membershipNumber: user.membership_number ?? user.membershipNumber ?? user.membershipId,
     membershipId: user.membership_number ?? user.membershipId,
+    qrCode: user.qr_code ?? user.qrCode ?? user.qrCodeData ?? user.permanentQrCode,
     verificationStatus: user.verification_status ?? user.verificationStatus,
     employmentStatus: user.employment_status ?? user.employmentStatus,
     courseName: user.course_name ?? user.courseName,
@@ -405,7 +408,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     restoreState()
   }, [refreshRegistryData])
 
-  const fetchCurrentUserFromApi = useCallback(async (userId: string) => {
+  const fetchCurrentUserFromApi = useCallback(async (userId: string): Promise<any | null> => {
     try {
       const response = await fetch(`/api/profile?userId=${encodeURIComponent(userId)}`, {
         cache: "no-store",
@@ -426,12 +429,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const refreshCurrentUser = useCallback(async () => {
     try {
-      const session = await getCurrentSession()
+      const session = (await getCurrentSession()) as { user: any | null; role: string }
       const role = mapSupabaseRole(session.role)
-      let nextUser = session.user
+      let nextUser: any = session.user
 
       if (session.user?.id) {
-        const apiUser = await fetchCurrentUserFromApi(session.user.id)
+        const apiUser: any = await fetchCurrentUserFromApi(session.user.id)
         if (apiUser) {
           nextUser = apiUser
         }
@@ -573,50 +576,56 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return false
     }
 
-    const fullName = (details.fullName as string) || currentUser.fullName || currentUser.name || "Unknown Student"
-    const email = (details.email as string) || currentUser.email || ""
-    const phone = (details.phone as string) || currentUser.phone || ""
-    const district = (details.district as string) || "Koinadugu"
-    const employmentStatus = (details.employmentStatus as string) || "Student"
+    const detailsAny = details as Record<string, any>
+    const fullName = (detailsAny.fullName as string) || currentUser.fullName || currentUser.name || "Unknown Student"
+    const email = (detailsAny.email as string) || currentUser.email || ""
+    const phone = (detailsAny.phone as string) || currentUser.phone || ""
+    const district = (detailsAny.district as string) || "Koinadugu"
+    const employmentStatus = (detailsAny.employmentStatus as string) || "Student"
+    const university = detailsAny.university as string | undefined
+    const department = detailsAny.department as string | undefined
+    const course = detailsAny.course as string | undefined
+    const level = detailsAny.level as string | undefined
 
     try {
-      const profileUpdatePayload: Record<string, unknown> = {
-        fullName,
-        email,
-        phone,
-        gender: details.gender as string | undefined,
-        dob: details.dob as string | undefined,
-        nationality: details.nationality as string | undefined,
-        district,
-        chiefdom: details.chiefdom as string | undefined,
-        town: details.town as string | undefined,
-        homeAddress: details.homeAddress as string | undefined,
-        currentAddress: details.currentAddress as string | undefined,
-        university: details.university as string | undefined,
-        campus: details.campus as string | undefined,
-        college: details.college as string | undefined,
-        faculty: details.faculty as string | undefined,
-        department: details.department as string | undefined,
-        courseName: details.course as string | undefined,
-        academicLevel: details.level as string | undefined,
-        studentId: details.studentId as string | undefined,
-        admissionYear: details.admissionYear as string | undefined,
-        expectedGraduationYear: (details.expectedGradYear as string) || (details.expectedGraduationYear as string | undefined),
-        graduationYear: details.graduationYear as string | undefined,
-        occupation: details.occupation as string | undefined,
-        organization: details.organization as string | undefined,
-        biography: (details.bio as string | undefined) || (details.biography as string | undefined),
-        skills: details.skills as string[] | undefined,
-        emergencyContact:
-          details.emergencyContact ??
-          {
-            name: (details.emergencyName as string | undefined),
-            relationship: (details.emergencyRelation as string | undefined),
-            phone: (details.emergencyPhone as string | undefined),
-          },
-        employmentStatus,
-        status: "pending",
-        profileCompletion: (details.profileCompletion as number) ?? 100,
+const detailsAny = details as Record<string, any>
+    const profileUpdatePayload: Record<string, unknown> = {
+      fullName,
+      email,
+      phone,
+      gender: detailsAny.gender as string | undefined,
+      dob: detailsAny.dob as string | undefined,
+      nationality: detailsAny.nationality as string | undefined,
+      district,
+      chiefdom: detailsAny.chiefdom as string | undefined,
+      town: detailsAny.town as string | undefined,
+      homeAddress: detailsAny.homeAddress as string | undefined,
+      currentAddress: detailsAny.currentAddress as string | undefined,
+      university: detailsAny.university as string | undefined,
+      campus: detailsAny.campus as string | undefined,
+      college: detailsAny.college as string | undefined,
+      faculty: detailsAny.faculty as string | undefined,
+      department: detailsAny.department as string | undefined,
+      courseName: detailsAny.course as string | undefined,
+      academicLevel: detailsAny.level as string | undefined,
+      studentId: detailsAny.studentId as string | undefined,
+      admissionYear: detailsAny.admissionYear as string | undefined,
+      expectedGraduationYear: (detailsAny.expectedGradYear as string) || (detailsAny.expectedGraduationYear as string | undefined),
+      graduationYear: detailsAny.graduationYear as string | undefined,
+      occupation: detailsAny.occupation as string | undefined,
+      organization: detailsAny.organization as string | undefined,
+      biography: (detailsAny.bio as string | undefined) || (detailsAny.biography as string | undefined),
+      skills: detailsAny.skills as string[] | undefined,
+      emergencyContact:
+        detailsAny.emergencyContact ??
+        {
+          name: (detailsAny.emergencyName as string | undefined),
+          relationship: (detailsAny.emergencyRelation as string | undefined),
+          phone: (detailsAny.emergencyPhone as string | undefined),
+        },
+      employmentStatus,
+      status: "pending",
+      profileCompletion: (detailsAny.profileCompletion as number) ?? 100,
       }
 
       const profileResponse = await fetch("/api/profile", {
@@ -630,7 +639,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         throw new Error(profileError.error || "Failed to save profile data before registration")
       }
 
-      const registration = {
+      const registration: Omit<import("@/lib/supabase/types").SupabaseRegistration, "id" | "created_at"> = {
         user_id: currentUser.id,
         full_name: fullName,
         email,
@@ -640,17 +649,17 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         status: "pending",
         role: employmentStatus === "Student" ? "student" : "graduate",
         profile: {
-          ...details,
+          ...detailsAny,
           fullName,
           email,
           phone,
           district,
           employmentStatus,
         },
-        university: details.university,
-        department: details.department,
-        course: details.course,
-        level: details.level,
+        university,
+        department,
+        course,
+        level,
         employment_status: employmentStatus,
       }
 
@@ -666,19 +675,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         district,
         submittedDate: new Date().toISOString().split("T")[0],
         status: "pending",
-        role: (details.employmentStatus === "Student" ? "student" : "graduate") as "student" | "graduate",
+        role: (detailsAny.employmentStatus === "Student" ? "student" : "graduate") as "student" | "graduate",
         profile: {
-          ...details,
+          ...detailsAny,
           fullName,
           email,
           phone,
           district,
           employmentStatus,
         },
-        university: details.university,
-        department: details.department,
-        course: details.course,
-        level: details.level,
+        university,
+        department,
+        course,
+        level,
         employmentStatus,
       }
 

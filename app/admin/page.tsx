@@ -125,13 +125,12 @@ export default function AdminPage() {
     return matchSearch && matchType
   })
 
-  // Mock recent logins for visual interest
-  const recentLogins = [
-    { name: "Alusine Bangura", role: "super_admin", time: "10 mins ago", ip: "197.220.124.9" },
-    { name: "Fatmata Koroma", role: "executive", time: "1 hour ago", ip: "197.220.124.12" },
-    { name: "Mohamed Sesay", role: "executive", time: "2 hours ago", ip: "197.220.125.88" },
-    { name: "Dr. Brima Sankoh", role: "stakeholder", time: "1 day ago", ip: "197.221.10.4" }
-  ]
+  const recentActivity = auditLog.slice(0, 4).map((entry) => ({
+    name: entry.actor,
+    action: entry.action,
+    target: entry.target,
+    timestamp: entry.timestamp,
+  }))
 
   return (
     <div className="flex flex-col gap-6 font-sans pb-10 max-w-6xl mx-auto">
@@ -230,18 +229,19 @@ export default function AdminPage() {
             <CardTitle className="text-base">Recent Portal Logins</CardTitle>
           </CardHeader>
           <CardContent className="p-0 flex-1 divide-y divide-border">
-            {recentLogins.map((login, idx) => (
-              <div key={idx} className="flex items-center justify-between px-4 py-3 text-xs hover:bg-muted/10">
-                <div>
-                  <span className="font-bold text-foreground block">{login.name}</span>
-                  <span className="text-[10px] text-muted-foreground font-mono">{login.ip}</span>
+            {recentActivity.length > 0 ? (
+              recentActivity.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between px-4 py-3 text-xs hover:bg-muted/10">
+                  <div>
+                    <span className="font-bold text-foreground block">{item.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{item.action} {item.target}</span>
+                  </div>
+                  <div className="text-right text-[10px] text-muted-foreground">{item.timestamp}</div>
                 </div>
-                <div className="text-right flex flex-col items-end">
-                  <Badge variant="outline" className="text-[9px] uppercase tracking-wider font-semibold py-0.5">{login.role.replace("_", " ")}</Badge>
-                  <span className="text-[10px] text-muted-foreground mt-1">{login.time}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="px-4 py-5 text-center text-sm text-muted-foreground">No recent audit activity is available yet.</div>
+            )}
           </CardContent>
         </Card>
       </div>

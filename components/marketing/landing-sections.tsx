@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { NUKaFs_CONTACT } from "@/lib/membership"
 // Use a small static marketing FAQ/testimonial set instead of demo mock-data
 const faqs = [
   { question: "What is NUKaFs Registry?", answer: "A verified registry for students from Koinadugu & Falaba districts." },
@@ -332,8 +333,8 @@ export function Contact() {
             Questions about membership, approvals or opportunities? Send us a message and an executive will respond.
           </p>
           <div className="flex flex-col gap-3 text-sm">
-            <p><span className="font-medium">Email:</span> syscend@gmail.com</p>
-            <p><span className="font-medium">Phone:</span> +23279630777</p>
+            <p><span className="font-medium">Email:</span> {NUKaFs_CONTACT.email}</p>
+            <p><span className="font-medium">Phone:</span> {NUKaFs_CONTACT.phone}</p>
             <p><span className="font-medium">Office:</span> Kabala, Koinadugu District, Sierra Leone</p>
           </div>
         </div>

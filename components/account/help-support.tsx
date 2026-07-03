@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/dashboard/ui-bits"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NUKaFs_CONTACT } from "@/lib/membership"
 
 export function HelpSupportPage({
   title = "Help & Support",
@@ -60,10 +61,10 @@ export function HelpSupportPage({
             </div>
             <h3 className="text-sm font-bold">Email Support</h3>
             <a
-              href="mailto:syscend@gmail.com"
+              href={`mailto:${NUKaFs_CONTACT.email}`}
               className="text-xs text-primary hover:underline"
             >
-              syscend@gmail.com
+              {NUKaFs_CONTACT.email}
             </a>
           </CardContent>
         </Card>
@@ -73,8 +74,8 @@ export function HelpSupportPage({
               <Phone className="size-5" />
             </div>
             <h3 className="text-sm font-bold">Phone Support</h3>
-            <a href="tel:+23279630777" className="text-xs text-primary hover:underline">
-              +23279630777
+            <a href={`tel:${NUKaFs_CONTACT.phone}`} className="text-xs text-primary hover:underline">
+              {NUKaFs_CONTACT.phone}
             </a>
           </CardContent>
         </Card>

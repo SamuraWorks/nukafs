@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   FileBarChart,
   Download,
@@ -18,6 +18,7 @@ import {
   BarChart3,
   X,
 } from "lucide-react"
+import { useAppState } from "@/lib/context/app-state-context"
 import { PageHeader } from "@/components/dashboard/ui-bits"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -131,11 +132,117 @@ const CATEGORY_LABELS = {
 }
 
 export default function PlatformReportsPage() {
+  const { students, pendingRegistrations, teamMembers, opportunities } = useAppState()
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [previewReport, setPreviewReport] = useState<ReportCard | null>(null)
   const [yearFilter, setYearFilter] = useState("2024")
 
-  const filtered = REPORTS.filter(r => categoryFilter === "all" || r.category === categoryFilter)
+  const totalStudents = students.length
+  const activeStudents = students.filter((s) => String(s.status ?? s.membership_status).toLowerCase() === "active").length
+  const pendingStudents = students.filter((s) => String(s.status ?? s.membership_status).toLowerCase() === "pending").length
+  const suspendedStudents = students.filter((s) => String(s.status ?? s.membership_status).toLowerCase() === "suspended").length
+  const expiredStudents = students.filter((s) => String(s.status ?? s.membership_status).toLowerCase() === "expired").length
+  const scholarshipCount = students.filter((s) => Boolean(s.scholarshipApplicant ?? s.scholarship_applicant)).length
+  const employedCount = students.filter((s) => String(s.employmentStatus ?? s.employment_status).toLowerCase() === "employed").length
+  const selfEmployedCount = students.filter((s) => String(s.employmentStatus ?? s.employment_status).toLowerCase() === "self-employed").length
+  const studentEmploymentCount = students.filter((s) => String(s.employmentStatus ?? s.employment_status).toLowerCase() === "student").length
+
+  const membersByUniversity = useMemo(() => analyticsService.getMembersByUniversity(students), [students])
+  const membersByDepartment = useMemo(() => analyticsService.getMembersByDepartment(students), [students])
+  const membersByLevel = useMemo(() => analyticsService.getMembersByLevel(students), [students])
+  const employmentStats = useMemo(() => analyticsService.getEmploymentStats(students), [students])
+  const scholarshipRequests = useMemo(() => analyticsService.getScholarshipRequests(students), [students])
+  const registrationTrend = useMemo(() => analyticsService.getRegistrationTrend(students), [students])
+
+  const universityCounts = useMemo(() => {
+    const counts = membersByUniversity
+    const top = counts.slice().sort((a, b) => b.value - a.value)[0]
+    return {
+      total: new Set(students.map((s) => s.university?.trim()).filter(Boolean)).size,
+      topName: top?.name || "N/A",
+      topCount: top?.value || 0,
+    }
+  }, [students, membersByUniversity])
+
+  const departmentCounts = useMemo(() => {
+    const counts = membersByDepartment
+    const top = counts.slice().sort((a, b) => b.value - a.value)[0]
+    return {
+      total: new Set(students.map((s) => s.department?.trim()).filter(Boolean)).size,
+      topName: top?.name || "N/A",
+      topCount: top?.value || 0,
+    }
+  }, [students, membersByDepartment])
+
+  const courseCounts = useMemo(() => {
+    const counts = analyticsService.getMembersByCourse(students)
+    const top = counts.slice().sort((a, b) => b.value - a.value)[0]
+    return {
+      total: new Set(students.map((s) => s.course?.trim()).filter(Boolean)).size,
+      topName: top?.name || "N/A",
+      topCount: top?.value || 0,
+    }
+  }, [students])
+
+  const reportStats: Record<string, { label: string; value: string }[]> = {
+    rpt_students: [
+      { label: "Total Students", value: totalStudents.toLocaleString() },
+      { label: "Active", value: activeStudents.toLocaleString() },
+      { label: "Pending", value: pendingStudents.toLocaleString() },
+    ],
+    rpt_exec: [
+      { label: "Total Executives", value: teamMembers.filter((m) => m.role === "executive").length.toLocaleString() },
+      { label: "Active", value: teamMembers.filter((m) => m.status === "active").length.toLocaleString() },
+      { label: "Pending Invites", value: teamMembers.filter((m) => m.status === "invited").length.toLocaleString() },
+    ],
+    rpt_uni: [
+      { label: "Universities", value: universityCounts.total.toLocaleString() },
+      { label: "Total Students", value: totalStudents.toLocaleString() },
+      { label: "Most Members", value: `${universityCounts.topName} (${universityCounts.topCount})` },
+    ],
+    rpt_faculty: [
+      { label: "Faculties", value: departmentCounts.total.toLocaleString() },
+      { label: "Largest Faculty", value: departmentCounts.topName },
+      { label: "Students", value: totalStudents.toLocaleString() },
+    ],
+    rpt_dept: [
+      { label: "Departments", value: departmentCounts.total.toLocaleString() },
+      { label: "Top Dept", value: departmentCounts.topName },
+      { label: "Enrolment", value: totalStudents.toLocaleString() },
+    ],
+    rpt_course: [
+      { label: "Courses", value: courseCounts.total.toLocaleString() },
+      { label: "Most Popular", value: courseCounts.topName },
+      { label: "Members", value: courseCounts.topCount.toLocaleString() },
+    ],
+    rpt_scholarship: [
+      { label: "Applicants", value: scholarshipCount.toLocaleString() },
+      { label: "Total Students", value: totalStudents.toLocaleString() },
+      { label: "Participation", value: totalStudents ? `${((scholarshipCount / totalStudents) * 100).toFixed(1)}%` : "0%" },
+    ],
+    rpt_employment: [
+      { label: "Employed", value: employedCount.toLocaleString() },
+      { label: "Self-Employed", value: selfEmployedCount.toLocaleString() },
+      { label: "Students", value: studentEmploymentCount.toLocaleString() },
+    ],
+    rpt_internship: [
+      { label: "Opportunities", value: opportunities.length.toLocaleString() },
+      { label: "Active Partners", value: opportunities.length.toLocaleString() },
+      { label: "Planned", value: opportunities.length.toLocaleString() },
+    ],
+    rpt_registration: [
+      { label: "Pending", value: pendingRegistrations.length.toLocaleString() },
+      { label: "Total Students", value: totalStudents.toLocaleString() },
+      { label: "Active", value: activeStudents.toLocaleString() },
+    ],
+    rpt_analytics: [
+      { label: "Active Users", value: totalStudents.toLocaleString() },
+      { label: "Opportunities", value: opportunities.length.toLocaleString() },
+      { label: "Reports", value: REPORTS.length.toLocaleString() },
+    ],
+  }
+
+  const filtered = REPORTS.filter((r) => categoryFilter === "all" || r.category === categoryFilter)
 
   function handleExport(report: ReportCard, format: "pdf" | "excel") {
     toast.success(`Exporting "${report.title}" as ${format.toUpperCase()}...`, {
@@ -144,12 +251,12 @@ export default function PlatformReportsPage() {
   }
 
   // Load analytics datasets
-  const registrationTrend = analyticsService.getRegistrationTrend()
-  const membersByUniversity = analyticsService.getMembersByUniversity()
-  const membersByDepartment = analyticsService.getMembersByDepartment()
-  const membersByLevel = analyticsService.getMembersByLevel()
-  const employmentStats = analyticsService.getEmploymentStats()
-  const scholarshipRequests = analyticsService.getScholarshipRequests()
+  const reportRegistrationTrend = registrationTrend
+  const reportMembersByUniversity = membersByUniversity
+  const reportMembersByDepartment = membersByDepartment
+  const reportMembersByLevel = membersByLevel
+  const reportEmploymentStats = employmentStats
+  const reportScholarshipRequests = scholarshipRequests
 
   return (
     <div className="flex flex-col gap-6 font-sans pb-10 max-w-6xl mx-auto">
@@ -207,6 +314,7 @@ export default function PlatformReportsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map(report => {
           const Icon = report.icon
+          const cardStats = reportStats[report.id] ?? report.stats
           return (
             <Card key={report.id} className="border shadow-sm hover:shadow-md transition-all group">
               <CardContent className="p-5 flex flex-col gap-4 h-full">
@@ -222,7 +330,7 @@ export default function PlatformReportsPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-2">
-                  {report.stats.map(stat => (
+                  {cardStats.map(stat => (
                     <div key={stat.label} className="text-center bg-muted/30 rounded-lg p-2">
                       <p className="text-xs font-bold text-foreground">{stat.value}</p>
                       <p className="text-[9px] text-muted-foreground">{stat.label}</p>
@@ -303,9 +411,7 @@ export default function PlatformReportsPage() {
             <div className="py-4 flex flex-col gap-6">
               {/* Stats summary */}
               <div className="grid grid-cols-3 gap-3">
-                {previewReport.stats.map(s => (
-                  <div key={s.label} className="border rounded-xl p-3 text-center bg-muted/10">
-                    <p className="text-xl font-heading font-bold text-foreground">{s.value}</p>
+                {(reportStats[previewReport.id] ?? previewReport.stats).map((s) => (
                     <p className="text-[10px] text-muted-foreground">{s.label}</p>
                   </div>
                 ))}

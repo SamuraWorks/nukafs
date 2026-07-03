@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { Download, ExternalLink } from "lucide-react"
 import { useAppState } from "@/lib/context/app-state-context"
@@ -10,6 +10,7 @@ import { DigitalMembershipCard } from "@/components/membership/digital-membershi
 import { studentToVerifiedProfile, type VerifiedMemberProfile } from "@/lib/membership"
 import { memberToVerifiedProfile } from "@/lib/membership"
 import { toast } from "sonner"
+import { toPng } from "html-to-image"
 
 function staffToVerifiedProfile(user: {
   name?: string
@@ -62,6 +63,7 @@ export function MembershipCardPageView({
   const { currentUser } = useAppState()
   const [isDownloading, setIsDownloading] = useState(false)
   const [isFlipped, setIsFlipped] = useState(false)
+  const cardRef = useRef<HTMLDivElement | null>(null)
 
   const member = useMemo<VerifiedMemberProfile | null>(() => {
     if (!currentUser) return null
@@ -76,13 +78,32 @@ export function MembershipCardPageView({
     ? storedQrCode
     : `/verify/${encodeURIComponent(member?.membershipNumber ?? "")}`
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    if (!cardRef.current || !member) return
+
     setIsDownloading(true)
-    toast.info("Generating printable membership card...")
-    setTimeout(() => {
+    toast.info("Preparing membership card download...")
+
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+      })
+
+      const link = document.createElement("a")
+      link.href = dataUrl
+      link.download = `${member.membershipNumber || "NUKaFs-ID"}.png`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      toast.success("Membership card downloaded to your device.")
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to download the membership card.")
+    } finally {
       setIsDownloading(false)
-      toast.success("Membership card downloaded to your device!")
-    }, 2000)
+    }
   }
 
   if (!member) {
@@ -117,7 +138,7 @@ export function MembershipCardPageView({
         }
       />
 
-      <div className="flex flex-col items-center py-6">
+      <div ref={cardRef} className="flex flex-col items-center py-6">
         <DigitalMembershipCard
           member={member}
           isFlipped={isFlipped}
