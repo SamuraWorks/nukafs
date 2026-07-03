@@ -44,7 +44,11 @@ function generateToken() {
 }
 
 function getOrigin() {
-  return process.env.NEXT_PUBLIC_APP_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://registry.nukafs-sl.org')
+  return (
+    process.env.NEXT_PUBLIC_VERIFICATION_ORIGIN ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://nukafs.vercel.app')
+  )
 }
 
 async function updateUserColumns(userId, values) {

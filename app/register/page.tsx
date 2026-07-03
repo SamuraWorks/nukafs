@@ -72,6 +72,7 @@ export default function RegisterPage() {
       toast.success("Account created. Please choose your college status to continue.")
       router.replace("/setup?status=select")
     } else {
+      console.error("Registration failed details:", result)
       toast.error(result.error ?? "Registration failed")
     }
   }

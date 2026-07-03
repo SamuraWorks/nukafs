@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Activity,
   RefreshCw,
@@ -101,25 +101,64 @@ const STATUS_CONFIG = {
   critical: { label: "Critical", className: "bg-destructive/10 text-destructive border-destructive/20", dot: "bg-destructive", Icon: XCircle },
 }
 
+const serviceIconMap: Record<string, typeof Database> = {
+  "Database (Supabase)": Database,
+  "Authentication Service": Lock,
+  "File Storage": HardDrive,
+  "Notification Service": Bell,
+  "Email Service": Mail,
+  "Backup System": Server,
+  "API Gateway": Zap,
+}
+
+const defaultHealth = {
+  lastRefresh: "Just now",
+  overallStatus: "warning",
+  healthyServices: 6,
+  totalServices: 7,
+  uptime: "99.97%",
+  version: "v1.4.2",
+  metrics: {
+    cpuUsage: "34%",
+    memoryUsage: "53%",
+    activeUsers: 38,
+    requestsPerMin: 184,
+  },
+  services: services.map((service) => ({
+    name: service.name,
+    status: service.status,
+    latency: service.latency,
+    uptime: service.uptime,
+  })),
+}
+
 export default function SystemHealthPage() {
-  const [lastRefresh, setLastRefresh] = useState("Just now")
+  const [health, setHealth] = useState(defaultHealth)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  const handleRefresh = () => {
+  const loadHealth = async () => {
     setIsRefreshing(true)
-    setTimeout(() => {
-      setIsRefreshing(false)
-      setLastRefresh("Just now")
+    try {
+      const response = await fetch("/api/admin/health")
+      if (!response.ok) {
+        throw new Error("Failed to load system health")
+      }
+      const data = await response.json()
+      setHealth(data)
       toast.success("System status refreshed successfully.")
-    }, 1200)
+    } catch (error) {
+      console.error(error)
+      toast.error("Unable to refresh system status.")
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
-  const overallStatus = services.some(s => s.status === "critical")
-    ? "critical"
-    : services.some(s => s.status === "warning")
-    ? "warning"
-    : "healthy"
+  useEffect(() => {
+    loadHealth()
+  }, [])
 
+  const overallStatus = health.overallStatus
   const OverallIcon = STATUS_CONFIG[overallStatus].Icon
 
   return (
@@ -129,8 +168,8 @@ export default function SystemHealthPage() {
         description="Real-time overview of all platform services, performance metrics, and system recommendations."
         action={
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Last refresh: {lastRefresh}</span>
-            <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} className="gap-2">
+            <span className="text-xs text-muted-foreground">Last refresh: {health.lastRefresh}</span>
+            <Button variant="outline" onClick={loadHealth} disabled={isRefreshing} className="gap-2">
               <RefreshCw className={`size-4 ${isRefreshing ? "animate-spin" : ""}`} />
               Refresh Status
             </Button>
@@ -156,7 +195,7 @@ export default function SystemHealthPage() {
             Overall System Status: <span className={overallStatus === "healthy" ? "text-emerald-600" : overallStatus === "warning" ? "text-amber-600" : "text-destructive"}>{overallStatus === "healthy" ? "All Systems Operational" : overallStatus === "warning" ? "Degraded Performance" : "Service Disruption"}</span>
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {services.filter(s => s.status === "healthy").length} of {services.length} services healthy • System Uptime: 99.97% • Version 1.4.2
+            {health.healthyServices} of {health.totalServices} services healthy • System Uptime: {health.uptime} • Version {health.version}
           </p>
         </div>
         <div className="flex gap-6 text-center shrink-0 hidden sm:flex">
@@ -177,10 +216,10 @@ export default function SystemHealthPage() {
 
       {/* Top Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="CPU Usage" value="34%" icon={Cpu} trend="Avg 47% today" trendUp={false} hint="" />
-        <StatCard label="Memory Usage" value="53%" icon={MemoryStick} trend="3.8 GB of 8 GB" trendUp={true} hint="" />
-        <StatCard label="Active Users" value="38" icon={Users} trend="+12% vs yesterday" trendUp={true} hint="" />
-        <StatCard label="Requests / min" value="184" icon={BarChart3} trend="Peak: 312 at 12:15" trendUp={true} hint="" />
+        <StatCard label="CPU Usage" value={health.metrics.cpuUsage} icon={Cpu} trend="Avg 47% today" trendUp={false} />
+        <StatCard label="Memory Usage" value={health.metrics.memoryUsage} icon={MemoryStick} trend="3.8 GB of 8 GB" trendUp={true} />
+        <StatCard label="Active Users" value={health.metrics.activeUsers} icon={Users} trend="+12% vs yesterday" trendUp={true} />
+        <StatCard label="Requests / min" value={health.metrics.requestsPerMin} icon={BarChart3} trend="Peak: 312 at 12:15" trendUp={true} />
       </div>
 
       {/* Services Grid */}
@@ -194,9 +233,9 @@ export default function SystemHealthPage() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border">
-            {services.map((svc) => {
+            {health.services.map((svc) => {
               const config = STATUS_CONFIG[svc.status as keyof typeof STATUS_CONFIG]
-              const Icon = svc.icon
+              const Icon = serviceIconMap[svc.name] ?? Database
               return (
                 <div key={svc.name} className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/20 transition-colors">
                   <div className="size-9 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">

@@ -48,7 +48,8 @@ async function bootstrap() {
 
     // 2. Generate verification token
     const verificationToken = generateVerificationToken()
-    const verificationUrl = `https://registry.nukafs-sl.org/verify/${verificationToken}`
+    const origin = process.env.NEXT_PUBLIC_VERIFICATION_ORIGIN || process.env.NEXT_PUBLIC_APP_URL || 'https://nukafs.vercel.app'
+    const verificationUrl = `${origin}/verify/${verificationToken}`
 
     console.log("📝 Generating membership identity...")
     console.log(`   ID: NUKaFs-000001`)

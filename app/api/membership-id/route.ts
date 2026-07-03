@@ -189,10 +189,15 @@ export async function POST(request: NextRequest) {
         { onConflict: "key" }
       )
 
-    // Create membership identity
+    // Determine canonical verification origin. Allow override via env var.
+    const verificationOrigin = process.env.NEXT_PUBLIC_VERIFICATION_ORIGIN ?? "https://nukafs.vercel.app"
+
+    // Create membership identity using the canonical origin so generated verification URLs
+    // point to the public verification host we control.
     const identity = createMembershipIdentity(
       nextSequence,
-      membershipType as "student" | "stakeholder"
+      membershipType as "student" | "stakeholder",
+      verificationOrigin,
     )
 
     // Store identity in database

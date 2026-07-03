@@ -317,7 +317,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const snapshot = await fetchRegistrySnapshot()
-      setStudents((snapshot.students ?? []) as Student[])
+      // Ensure students state only contains members whose membershipType indicates Student
+      // snapshot.students already merges users table Students and students table entries.
+      const allStudents = (snapshot.students ?? []) as Student[]
+      const filteredStudents = allStudents.filter((s: any) => {
+        // Accept records with explicit membership type fields or where status/membership indicates student
+        const membershipType = (s.membershipType || s.membership_type || s.employmentStatus || s.employment_status || "Student")
+        return String(membershipType).toLowerCase().includes("student")
+      })
+
+      setStudents(filteredStudents)
       setPendingRegistrations(sortPendingRegistrationsByArrival((snapshot.pendingRegistrations ?? []) as PendingRegistration[]))
       setEditRequests((snapshot.editRequests ?? []) as EditRequest[])
       setAnnouncements((snapshot.announcements ?? []) as Announcement[])
@@ -555,6 +564,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     const result = await signUpWithPassword(name, email, password, phone)
     if (!result.success || !result.user) {
+      console.error("signUpWithPassword failed:", result)
       return { success: false, error: result.message ?? "Registration failed" }
     }
 

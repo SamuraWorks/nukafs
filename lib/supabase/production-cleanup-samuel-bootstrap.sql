@@ -171,7 +171,7 @@ BEGIN
 
   -- Bootstrap Samuel as a permanent member
   vtoken := encode(gen_random_bytes(32), 'hex');
-  vurl := 'https://registry.nukafs-sl.org/verify/' || vtoken;
+  vurl := 'https://nukafs.vercel.app/verify/' || vtoken;
 
   INSERT INTO membership_identities (
     user_id,
@@ -269,21 +269,23 @@ BEGIN
       actor_id,
       actor_name,
       action,
-      target,
+      target_entity,
+      target_id,
       type,
       module,
       status,
-      ip,
+      ip_address,
       created_at
     ) VALUES (
       samuel_id,
       samuel_full_name,
       'bootstrapped super admin profile',
+      'membership_identities',
       'NUKaFs-000001',
-      'system',
+      'other',
       'Membership',
       'success',
-      'BOOTSTRAP',
+      NULL,
       now()
     );
   END IF;

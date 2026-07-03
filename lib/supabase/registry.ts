@@ -172,6 +172,19 @@ export async function fetchEditRequests() {
 }
 
 export async function fetchRegistrySnapshot() {
+  if (typeof window !== "undefined") {
+    const response = await fetch("/api/registry-snapshot", { cache: "no-store" })
+    const result = await response.json()
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message ?? "Failed to fetch registry snapshot")
+    }
+
+    return result.data
+  }
+
+  const supabaseClient = ensureSupabaseClient()
+
   const [students, pendingRegistrations, editRequests, announcements, events, opportunities, universities] = await Promise.all([
     fetchStudents(1, 200).then((result) => result.data).catch(() => []),
     fetchPendingRegistrations().catch(() => []),
@@ -182,8 +195,106 @@ export async function fetchRegistrySnapshot() {
     fetchUniversities().catch(() => []),
   ])
 
+  // Also include any users in the `users` table who are Students but may not be present in the
+  // legacy `students` table (e.g. Super Admin or admin accounts that are also Current Students).
+  // We fetch recent student users and merge them into the students snapshot by unique id.
+  let migratedUsers: any[] = []
+  try {
+    // Use case-insensitive matching for membership_type and employment_status to be robust
+    const { data: userRows, error: userErr } = await supabaseClient
+      .from("users")
+      .select("*")
+      .or("membership_type.ilike.%student%,employment_status.ilike.%student%")
+
+    if (!userErr && Array.isArray(userRows)) {
+      migratedUsers = userRows
+    }
+  } catch (err) {
+    // ignore fetch errors and proceed with existing students
+  }
+
+  // Merge students from both sources, prefer `students` entries, but include migrated users
+  const studentsById = new Map<string, any>()
+  ;(students || []).forEach((s: any) => {
+    if (s?.id) studentsById.set(String(s.id), s)
+    else if (s?.user_id) studentsById.set(String(s.user_id), s)
+  })
+
+  ;(migratedUsers || []).forEach((u: any) => {
+    const id = String(u.id)
+    if (!studentsById.has(id)) {
+      // Normalize basic shape to match Student type expectations
+      const normalized = {
+        id: u.id,
+        fullName: u.full_name || u.fullName || u.name,
+        membershipType: u.membership_type || u.membershipType || u.employment_status || u.employmentStatus || "Student",
+        membershipNumber: u.membership_number || u.membershipNumber || null,
+        membershipId: u.membership_id || u.membershipId || null,
+        qrCode: u.qr_code || u.permanent_qr_code || u.qrCode,
+        university: u.university,
+        department: u.department,
+        course: u.course || u.courseName,
+        level: u.level,
+        status: u.membership_status || u.status || "active",
+        phone: u.phone,
+        email: u.email,
+        district: u.district,
+        chiefdom: u.chiefdom,
+        avatarColor: u.avatar_color || u.avatarColor,
+        joinedDate: u.joined_date || u.created_at,
+        dateIssued: u.date_issued || u.dateIssued,
+        qrCodeStatus: u.qr_code_status || u.qrCodeStatus,
+      }
+      studentsById.set(id, normalized)
+    }
+  })
+
+  const mergedStudents = Array.from(studentsById.values())
+
+  // If nothing was merged (e.g., legacy students table empty), fall back to a looser users-only search
+  if (mergedStudents.length === 0) {
+    try {
+      const { data: fallbackUsers, error: fbErr } = await supabaseClient
+        .from("users")
+        .select("*")
+        .or("membership_type.ilike.%student%,employment_status.ilike.%student%")
+
+      if (!fbErr && Array.isArray(fallbackUsers)) {
+        fallbackUsers.forEach((u: any) => {
+          const id = String(u.id)
+          if (!studentsById.has(id)) {
+            const normalized = {
+              id: u.id,
+              fullName: u.full_name || u.fullName || u.name,
+              membershipType: u.membership_type || u.membershipType || u.employment_status || u.employmentStatus || "Student",
+              membershipNumber: u.membership_number || u.membershipNumber || null,
+              membershipId: u.membership_id || u.membershipId || null,
+              qrCode: u.qr_code || u.permanent_qr_code || u.qrCode,
+              university: u.university,
+              department: u.department,
+              course: u.course || u.courseName,
+              level: u.level,
+              status: u.membership_status || u.status || "active",
+              phone: u.phone,
+              email: u.email,
+              district: u.district,
+              chiefdom: u.chiefdom,
+              avatarColor: u.avatar_color || u.avatarColor,
+              joinedDate: u.joined_date || u.created_at,
+              dateIssued: u.date_issued || u.dateIssued,
+              qrCodeStatus: u.qr_code_status || u.qrCodeStatus,
+            }
+            studentsById.set(id, normalized)
+          }
+        })
+      }
+    } catch (err) {
+      // ignore
+    }
+  }
+
   return {
-    students,
+    students: mergedStudents,
     pendingRegistrations,
     editRequests,
     announcements,

@@ -126,10 +126,10 @@ function buildAuthenticatedUser(
     membershipNumber: normalizeString(profileData?.membership_number),
     membership_number: normalizeString(profileData?.membership_number),
     membershipId: normalizeString(profileData?.membership_number),
-    verificationStatus: normalizeString(profileData?.verification_status),
-    membershipType: normalizeString(profileData?.membership_type),
+    verificationStatus: normalizeString(profileData?.verification_status ?? metadata?.verification_status),
+    membershipType: normalizeString(profileData?.membership_type ?? metadata?.membership_type),
     dateApproved: normalizeString(profileData?.date_approved ?? profileData?.date_issued ?? profileData?.joined_date),
-    accountStatus: normalizeString(profileData?.account_status),
+    accountStatus: normalizeString(profileData?.account_status ?? metadata?.account_status),
     permanentQrCode: normalizeString(profileData?.permanent_qr_code ?? profileData?.qr_code),
     university: normalizeString(profileData?.university),
     faculty: normalizeString(profileData?.faculty),
@@ -275,6 +275,16 @@ async function loadAuthenticatedUserProfile(
         full_name: normalizeString(metadata?.full_name ?? metadata?.fullName) ?? null,
         role: normalizeString(metadata?.role) ?? "student_pending",
         status: normalizeString(metadata?.status) ?? "pending",
+        membership_type: normalizeString(metadata?.membership_type),
+        membership_status: normalizeString(metadata?.membership_status),
+        verification_status: normalizeString(metadata?.verification_status),
+        account_status: normalizeString(metadata?.account_status),
+        university: normalizeString(metadata?.university),
+        faculty: normalizeString(metadata?.faculty),
+        campus: normalizeString(metadata?.campus),
+        course: normalizeString(metadata?.course),
+        department: normalizeString(metadata?.department),
+        level: normalizeString(metadata?.level),
         profile_completion: normalizeNumber(metadata?.profile_completion) ?? 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -369,9 +379,10 @@ export async function signUpWithPassword(
   })
 
   if (error || !data?.user) {
+    const errMsg = error ? `${error.message}${error?.code ? ` (code: ${error.code})` : ""}` : "Unable to register account"
     return {
       success: false,
-      message: error?.message ?? "Unable to register account",
+      message: errMsg,
     }
   }
 

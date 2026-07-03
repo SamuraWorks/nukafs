@@ -89,7 +89,7 @@ BEGIN
     RAISE NOTICE 'Samuel auth user not found; create him in Supabase Auth first.';
   ELSE
     vtoken := encode(gen_random_bytes(32), 'hex');
-    vurl := 'https://registry.nukafs-sl.org/verify/' || vtoken;
+    vurl := 'https://nukafs.vercel.app/verify/' || vtoken;
 
     INSERT INTO membership_identities (user_id, membership_id, membership_type, verification_token, verification_url, qr_code_data, qr_code_status, created_at, updated_at)
     SELECT samuel_id, 'NUKaFs-000001', 'student', vtoken, vurl, vurl, 'active', now(), now()
@@ -156,16 +156,28 @@ BEGIN
       SELECT 1 FROM information_schema.tables
       WHERE table_schema = current_schema() AND table_name = 'audit_logs'
     ) THEN
-      INSERT INTO audit_logs (actor_id, actor_name, action, target, type, module, status, ip, created_at)
+      INSERT INTO audit_logs (
+        actor_id,
+        actor_name,
+        action,
+        target_entity,
+        target_id,
+        type,
+        module,
+        status,
+        ip_address,
+        created_at
+      )
       VALUES (
         samuel_id,
         'Samuel Samura',
         'bootstrapped super admin profile',
+        'membership_identities',
         'NUKaFs-000001',
-        'system',
+        'other',
         'Membership',
         'success',
-        'BOOTSTRAP',
+        NULL,
         now()
       );
     END IF;
