@@ -103,7 +103,7 @@ function SetupPageContent() {
     }
 
     setIsSubmitting(true)
-    const success = await submitProfileWizard({
+    const result = await submitProfileWizard({
       ...formData,
       employmentStatus: activeMembershipType === "student" ? "Student" : "Graduate",
       status: "pending",
@@ -111,12 +111,12 @@ function SetupPageContent() {
     } as any)
     setIsSubmitting(false)
 
-    if (success) {
+    if (result.success) {
       setIsSubmitted(true)
       toast.success("Your application has been submitted successfully. The review team will assess your profile shortly.")
       router.replace("/setup")
     } else {
-      toast.error("Unable to submit your application. Please try again.")
+      toast.error(result.error || "Unable to submit your application. Please try again.")
     }
   }
 

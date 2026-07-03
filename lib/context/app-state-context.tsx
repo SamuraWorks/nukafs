@@ -183,7 +183,7 @@ interface AppStateContextProps {
   // Actions
   login: (emailOrPhone: string, password?: string) => Promise<{ success: boolean; error?: string; role?: AppRole }>
   register: (name: string, email: string, phone: string, password: string) => Promise<{ success: boolean; error?: string; role?: AppRole }>
-  submitProfileWizard: (details: Record<string, unknown>) => Promise<boolean>
+  submitProfileWizard: (details: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>
   requestProfileUpdate: (fields: { field: string; newValue: string }[], reason: string) => void
   approveRegistration: (id: string) => Promise<void>
   rejectRegistration: (id: string, reason?: string) => Promise<void>
@@ -583,7 +583,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   // Profile Wizard completion
   const submitProfileWizard = async (details: Record<string, unknown>) => {
     if (!currentUser) {
-      return false
+      return { success: false, error: "No authenticated user session available." }
     }
 
     const detailsAny = details as Record<string, any>
@@ -598,8 +598,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const level = detailsAny.level as string | undefined
 
     try {
-const detailsAny = details as Record<string, any>
-    const profileUpdatePayload: Record<string, unknown> = {
+      const profileUpdatePayload: Record<string, unknown> = {
       fullName,
       email,
       phone,
@@ -649,6 +648,40 @@ const detailsAny = details as Record<string, any>
         throw new Error(profileError.error || "Failed to save profile data before registration")
       }
 
+      const oldProfileSnapshot = {
+        fullName: currentUser.fullName,
+        email: currentUser.email,
+        phone: currentUser.phone,
+        gender: currentUser.gender,
+        dob: currentUser.dob,
+        nationality: currentUser.nationality,
+        district: currentUser.district,
+        chiefdom: currentUser.chiefdom,
+        town: currentUser.town,
+        homeAddress: currentUser.homeAddress,
+        currentAddress: currentUser.currentAddress,
+        university: currentUser.university,
+        campus: currentUser.campus,
+        college: currentUser.college,
+        faculty: currentUser.faculty,
+        department: currentUser.department,
+        courseName: currentUser.courseName,
+        academicLevel: currentUser.academicLevel,
+        studentId: currentUser.studentId,
+        admissionYear: currentUser.admissionYear,
+        expectedGraduationYear: currentUser.expectedGraduationYear,
+        graduationYear: currentUser.graduationYear,
+        occupation: currentUser.occupation,
+        organization: currentUser.organization,
+        biography: currentUser.biography,
+        skills: currentUser.skills,
+        emergencyContact: currentUser.emergencyContact,
+        employmentStatus: currentUser.employmentStatus,
+        status: currentUser.status,
+        role: currentUser.role,
+        profileCompletion: currentUser.profileCompletion,
+      }
+
       const registration: Omit<import("@/lib/supabase/types").SupabaseRegistration, "id" | "created_at"> = {
         user_id: currentUser.id,
         full_name: fullName,
@@ -675,8 +708,20 @@ const detailsAny = details as Record<string, any>
         employment_status: employmentStatus,
       }
 
-      await createRegistration(registration)
-      await refreshRegistryData()
+      try {
+        await createRegistration(registration)
+        await refreshRegistryData()
+      } catch (registrationError) {
+        console.error("Registration creation failed, reverting profile update:", registrationError)
+        await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUser.id, profile: oldProfileSnapshot }),
+        }).catch((restoreError) => {
+          console.error("Failed to restore user profile after registration failure:", restoreError)
+        })
+        throw registrationError
+      }
 
       const pendingRegistration: PendingRegistration = {
         id: `pr_${Date.now()}`,
@@ -763,15 +808,16 @@ const detailsAny = details as Record<string, any>
         "success",
       )
 
-      return true
+      return { success: true }
     } catch (error) {
       console.error("Unable to complete registration wizard:", error)
+      const message = error instanceof Error ? error.message : "Unable to submit your registration."
       addNotification(
         "Registration Error",
-        error instanceof Error ? error.message : "Unable to submit your registration.",
+        message,
         "error",
       )
-      return false
+      return { success: false, error: message }
     }
   }
 

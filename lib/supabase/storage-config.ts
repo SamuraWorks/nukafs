@@ -102,61 +102,64 @@ export async function uploadToStorage(
   userId: string,
   file: File,
   fileName?: string
-): Promise<{ url: string; path: string } | null> {
-  try {
-    const bucket = STORAGE_BUCKETS[bucketName as keyof typeof STORAGE_BUCKETS]
+): Promise<{ url: string; path: string }> {
+  const bucket = STORAGE_BUCKETS[bucketName as keyof typeof STORAGE_BUCKETS]
 
-    if (!bucket) {
-      throw new Error(`Unknown bucket: ${bucketName}`)
-    }
+  if (!bucket) {
+    throw new Error(`Unknown bucket: ${bucketName}`)
+  }
 
-    // Validate file size
-    if (file.size > bucket.maxSizeMB * 1024 * 1024) {
-      throw new Error(
-        `File exceeds maximum size of ${bucket.maxSizeMB}MB`
-      )
-    }
+  // Validate file size
+  if (file.size > bucket.maxSizeMB * 1024 * 1024) {
+    throw new Error(
+      `File exceeds maximum size of ${bucket.maxSizeMB}MB`
+    )
+  }
 
-    // Validate MIME type
-    if (!bucket.allowedMimeTypes.includes(file.type)) {
-      throw new Error(
-        `File type not allowed. Supported: ${bucket.allowedMimeTypes.join(", ")}`
-      )
-    }
+  // Validate MIME type
+  if (!bucket.allowedMimeTypes.includes(file.type)) {
+    throw new Error(
+      `File type not allowed. Supported: ${bucket.allowedMimeTypes.join(", ")}`
+    )
+  }
 
-    // Generate path: bucketName/userId/timestamp-filename
-    const timestamp = Date.now()
-    const path = `${userId}/${timestamp}-${fileName || file.name}`
+  // Generate path: bucketName/userId/timestamp-filename
+  const timestamp = Date.now()
+  const path = `${userId}/${timestamp}-${fileName || file.name}`
 
-    // Upload file
-    const { data, error } = await supabase.storage
+  // Upload file
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+    })
+
+  if (error) {
+    throw error
+  }
+
+  if (!data?.path) {
+    throw new Error("Storage upload succeeded but no path was returned.")
+  }
+
+  // Generate signed URL (7 day expiry)
+  const { data: signedData, error: signedError } =
+    await supabase.storage
       .from(bucketName)
-      .upload(path, file, {
-        cacheControl: "3600",
-        upsert: false,
-      })
+      .createSignedUrl(path, 7 * 24 * 60 * 60)
 
-    if (error) {
-      throw error
-    }
+  if (signedError) {
+    throw signedError
+  }
 
-    // Generate signed URL (7 day expiry)
-    const { data: signedData, error: signedError } =
-      await supabase.storage
-        .from(bucketName)
-        .createSignedUrl(path, 7 * 24 * 60 * 60)
+  if (!signedData?.signedUrl) {
+    throw new Error("Failed to generate signed URL for uploaded file.")
+  }
 
-    if (signedError) {
-      throw signedError
-    }
-
-    return {
-      url: signedData.signedUrl,
-      path: data.path,
-    }
-  } catch (error) {
-    console.error(`Upload error in ${bucketName}:`, error)
-    return null
+  return {
+    url: signedData.signedUrl,
+    path: data.path,
   }
 }
 
@@ -193,19 +196,18 @@ export async function getSignedUrl(
   bucketName: string,
   path: string,
   expirySeconds: number = 7 * 24 * 60 * 60
-): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.storage
-      .from(bucketName)
-      .createSignedUrl(path, expirySeconds)
+): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .createSignedUrl(path, expirySeconds)
 
-    if (error) {
-      throw error
-    }
-
-    return data.signedUrl
-  } catch (error) {
-    console.error(`Error getting signed URL:`, error)
-    return null
+  if (error) {
+    throw error
   }
+
+  if (!data?.signedUrl) {
+    throw new Error("Failed to generate signed URL")
+  }
+
+  return data.signedUrl
 }

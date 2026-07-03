@@ -48,6 +48,16 @@ export async function POST(request: Request) {
     const registration = (await request.json()) as Record<string, unknown>
     const adminClient = getAdminClient()
 
+    const requiredFields = ["full_name", "email", "district", "chiefdom"]
+    for (const field of requiredFields) {
+      if (!registration[field] || typeof registration[field] !== "string" || !String(registration[field]).trim()) {
+        return NextResponse.json(
+          { success: false, message: `Missing or invalid required field: ${field}` },
+          { status: 400 },
+        )
+      }
+    }
+
     const allowedColumns = [
       "user_id",
       "full_name",
