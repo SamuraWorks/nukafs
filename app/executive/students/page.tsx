@@ -139,18 +139,19 @@ export default function StudentManagementPage() {
       "Chiefdom",
     ]
 
-    const rows = filteredStudents.map((student) => [
-      student.fullName ?? student.name ?? "",
-      student.membershipNumber ?? "",
-      student.university ?? "",
-      student.department ?? "",
-      student.level ?? "",
-      student.status ?? "",
-      student.phone ?? "",
-      student.email ?? "",
-      student.district ?? "",
-      student.chiefdom ?? "",
-    ]
+    const rows = filteredStudents
+      .map((student) => [
+        student.fullName ?? student.name ?? "",
+        student.membershipNumber ?? "",
+        student.university ?? "",
+        student.department ?? "",
+        student.level ?? "",
+        student.status ?? "",
+        student.phone ?? "",
+        student.email ?? "",
+        student.district ?? "",
+        student.chiefdom ?? "",
+      ])
       .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
 
     const content = [headers.join(","), ...rows].join("\n")

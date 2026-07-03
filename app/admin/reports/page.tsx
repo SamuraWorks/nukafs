@@ -412,7 +412,9 @@ export default function PlatformReportsPage() {
               {/* Stats summary */}
               <div className="grid grid-cols-3 gap-3">
                 {(reportStats[previewReport.id] ?? previewReport.stats).map((s) => (
-                    <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                  <div key={s.label} className="text-center bg-muted/30 rounded-lg p-2">
+                    <p className="text-xs font-bold text-foreground">{s.value}</p>
+                    <p className="text-[9px] text-muted-foreground">{s.label}</p>
                   </div>
                 ))}
               </div>
