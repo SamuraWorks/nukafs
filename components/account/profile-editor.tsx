@@ -513,7 +513,7 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 pb-24">
       <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-start">
           <Link href={backHref}>
@@ -534,7 +534,7 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
             <ShieldCheck className="size-3.5" />
             {currentRoleLabel}
           </Badge>
-          <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto gap-2 bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={handleSave} disabled={isSaving} className="hidden sm:inline-flex w-auto gap-2 bg-emerald-600 hover:bg-emerald-700">
             {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
             Save Changes
           </Button>
@@ -560,21 +560,23 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
                   <Label htmlFor="fullName" className="text-xs font-semibold">Full Name</Label>
-                  <Input id="fullName" name="fullName" value={formData.fullName} onChange={handleInputChange} className="mt-1" />
+                  <Input id="fullName" name="fullName" value={formData.fullName} onChange={handleInputChange} className="mt-1 w-full" />
                 </div>
                 <div>
                   <Label htmlFor="gender" className="text-xs font-semibold">Gender</Label>
                   <div className="mt-1">
-                    <SearchableSelect options={genderOptions} value={formData.gender} onChange={(value) => handleSelectChange("gender", value)} allowOther={true} otherPlaceholder="Specify gender" />
+                    <div className="w-full">
+                      <SearchableSelect options={genderOptions} value={formData.gender} onChange={(value) => handleSelectChange("gender", value)} allowOther={true} otherPlaceholder="Specify gender" />
+                    </div>
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="dob" className="text-xs font-semibold">Date of Birth</Label>
-                  <Input id="dob" name="dob" type="date" value={formData.dob} onChange={handleInputChange} className="mt-1" />
+                  <Input id="dob" name="dob" type="date" value={formData.dob} onChange={handleInputChange} className="mt-1 w-full" />
                 </div>
                 <div>
                   <Label htmlFor="nationality" className="text-xs font-semibold">Nationality</Label>
-                  <Input id="nationality" name="nationality" value={formData.nationality} onChange={handleInputChange} className="mt-1" />
+                  <Input id="nationality" name="nationality" value={formData.nationality} onChange={handleInputChange} className="mt-1 w-full" />
                 </div>
               </div>
             </AccordionContent>
@@ -945,9 +947,9 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
             <CardContent className="space-y-4">
               <div className="flex items-center justify-center rounded-2xl border bg-muted/40 p-4">
                 {photoPreview ? (
-                  <img src={photoPreview} alt="Profile preview" className="h-28 w-28 rounded-2xl object-cover shadow-sm" />
+                  <img src={photoPreview} alt="Profile preview" className="h-20 w-20 sm:h-28 sm:w-28 rounded-2xl object-cover shadow-sm" />
                 ) : (
-                  <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-background text-3xl font-bold text-muted-foreground shadow-sm">
+                  <div className="flex h-20 w-20 sm:h-28 sm:w-28 items-center justify-center rounded-2xl bg-background text-3xl font-bold text-muted-foreground shadow-sm">
                     {String(currentUser?.fullName || currentUser?.name || "U").charAt(0)}
                   </div>
                 )}
@@ -1013,6 +1015,21 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
           </Card>
         </div>
       </div>
+
+      {/* Mobile fixed save bar */}
+      <div className="fixed inset-x-0 bottom-0 z-40 bg-card/95 backdrop-blur border-t py-3 px-4 sm:hidden">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <Button onClick={handleSave} disabled={isSaving} className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700">
+                {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                {isSaving ? "Saving..." : "Save Profile"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   )
 }
