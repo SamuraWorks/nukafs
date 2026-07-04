@@ -231,50 +231,46 @@ async function loadAuthenticatedUserProfile(
       ...(authUser.app_metadata ?? {}),
     } as Record<string, unknown>
 
+    const normalizedEmail = normalizeString(authUser.email)
     const { data: emailMatchedProfile, error: emailLookupError } = await supabaseClient
       .from("users")
       .select("*")
-      .eq("email", authUser.email ?? "")
+      .eq("email", normalizedEmail ?? "")
       .order("updated_at", { ascending: false })
       .maybeSingle()
 
-    if (!emailLookupError && emailMatchedProfile && emailMatchedProfile.id !== authUser.id) {
-      const migratedProfile = {
-        id: authUser.id,
-        email: authUser.email ?? emailMatchedProfile.email ?? null,
-        phone: authUser.phone ?? normalizeString(emailMatchedProfile.phone) ?? null,
-        full_name: normalizeString(emailMatchedProfile.full_name ?? metadata?.full_name ?? metadata?.fullName) ?? null,
-        role: normalizeString(emailMatchedProfile.role ?? metadata?.role) ?? "student_pending",
-        status: normalizeString(emailMatchedProfile.status ?? metadata?.status) ?? "pending",
-        profile_completion: normalizeNumber(emailMatchedProfile.profile_completion ?? metadata?.profile_completion) ?? 0,
-        membership_number: normalizeString(emailMatchedProfile.membership_number),
-        university: normalizeString(emailMatchedProfile.university),
-        created_at: normalizeString(emailMatchedProfile.created_at) ?? new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+    if (!emailLookupError && emailMatchedProfile) {
+      const { data: reconciledProfile, error: reconcileError } = await supabaseClient
+        .from("users")
+        .update({
+          email: normalizedEmail ?? emailMatchedProfile.email ?? null,
+          phone: authUser.phone ?? normalizeString(emailMatchedProfile.phone) ?? null,
+          full_name: normalizeString(emailMatchedProfile.full_name ?? metadata?.full_name ?? metadata?.fullName) ?? null,
+          role: normalizeString(emailMatchedProfile.role ?? metadata?.role) ?? "student_pending",
+          status: normalizeString(emailMatchedProfile.status ?? metadata?.status) ?? "pending",
+          profile_completion: normalizeNumber(emailMatchedProfile.profile_completion ?? metadata?.profile_completion) ?? 0,
+          membership_number: normalizeString(emailMatchedProfile.membership_number),
+          university: normalizeString(emailMatchedProfile.university),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", emailMatchedProfile.id)
+        .select("*")
+        .maybeSingle()
+
+      if (!reconcileError && reconciledProfile) {
+        return buildAuthenticatedUser(authUser, reconciledProfile)
       }
 
-      const { error: migrateError } = await supabaseClient.from("users").upsert(migratedProfile, {
-        onConflict: "id",
-      })
-
-      if (!migrateError) {
-        await supabaseClient.from("users").delete().eq("id", emailMatchedProfile.id)
-        const { data: migratedProfileData, error: reloadError } = await supabaseClient
-          .from("users")
-          .select("*")
-          .eq("id", authUser.id)
-          .maybeSingle()
-
-        if (!reloadError && migratedProfileData) {
-          return buildAuthenticatedUser(authUser, migratedProfileData)
-        }
+      if (reconcileError) {
+        console.warn("Unable to reconcile existing profile by email:", reconcileError)
       }
     }
 
-    const { error: upsertError } = await supabaseClient.from("users").upsert(
-      {
+    const { data: createdProfile, error: insertError } = await supabaseClient
+      .from("users")
+      .insert({
         id: authUser.id,
-        email: authUser.email ?? null,
+        email: normalizedEmail ?? null,
         phone: authUser.phone ?? null,
         full_name: normalizeString(metadata?.full_name ?? metadata?.fullName) ?? null,
         role: normalizeString(metadata?.role) ?? "student_pending",
@@ -292,22 +288,12 @@ async function loadAuthenticatedUserProfile(
         profile_completion: normalizeNumber(metadata?.profile_completion) ?? 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      },
-      { onConflict: "id" },
-    )
-    if (upsertError) {
-      console.warn("Unable to create authenticated profile record:", upsertError)
-      return buildAuthenticatedUser(authUser, null)
-    }
-
-    const { data: createdProfile, error: reloadError } = await supabaseClient
-      .from("users")
+      })
       .select("*")
-      .eq("id", authUser.id)
       .maybeSingle()
 
-    if (reloadError && reloadError.code !== "PGRST116") {
-      console.warn("Unable to reload authenticated profile after creation:", reloadError)
+    if (insertError) {
+      console.warn("Unable to create authenticated profile record:", insertError)
       return buildAuthenticatedUser(authUser, null)
     }
 

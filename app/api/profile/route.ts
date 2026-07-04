@@ -117,15 +117,6 @@ export async function PUT(request: NextRequest) {
       Object.entries(rawPayload).filter(([, v]) => v !== undefined)
     )
 
-    const upsertProfile = async (payload: Record<string, any>) =>
-      supabase
-        .from("users")
-        .upsert({ id: userId, ...payload }, { onConflict: "id" })
-        .select("*")
-
-    let updatedUserData
-    let upsertError
-
     const basePayload = Object.fromEntries(
       Object.entries(updatePayload).filter(([key]) => key !== "profile_completion" && key !== "profile_completion_percentage"),
     )
@@ -151,8 +142,48 @@ export async function PUT(request: NextRequest) {
       },
     ]
 
+    let updatedUserData
+    let upsertError
+
+    const { data: existingUser, error: fetchError } = await supabase
+      .from("users")
+      .select("id, email")
+      .eq("id", userId)
+      .maybeSingle()
+
+    if (fetchError && fetchError.code !== "PGRST116") {
+      throw fetchError
+    }
+
+    const targetUserId = existingUser?.id ?? userId
+
     for (const attempt of payloadAttempts) {
-      ;({ data: updatedUserData, error: upsertError } = await upsertProfile(attempt.payload))
+      if (existingUser) {
+        ;({ data: updatedUserData, error: upsertError } = await supabase
+          .from("users")
+          .update(attempt.payload)
+          .eq("id", targetUserId)
+          .select("*"))
+      } else {
+        const email = typeof profile?.email === "string" && profile.email.trim() ? profile.email.trim() : undefined
+        const { data: emailMatchedUser, error: emailLookupError } = email
+          ? await supabase.from("users").select("id").eq("email", email).maybeSingle()
+          : { data: null, error: null }
+
+        if (!emailLookupError && emailMatchedUser) {
+          ;({ data: updatedUserData, error: upsertError } = await supabase
+            .from("users")
+            .update(attempt.payload)
+            .eq("id", emailMatchedUser.id)
+            .select("*"))
+        } else {
+          ;({ data: updatedUserData, error: upsertError } = await supabase
+            .from("users")
+            .insert({ id: userId, ...attempt.payload })
+            .select("*"))
+        }
+      }
+
       if (!upsertError) break
       if (!isMissingColumnError(upsertError, "profile_completion") && !isMissingColumnError(upsertError, "profile_completion_percentage")) {
         break
