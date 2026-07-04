@@ -513,28 +513,28 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6">
+      <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-start">
           <Link href={backHref}>
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2 w-full sm:w-auto">
               <ArrowLeft className="size-4" />
               Back to Profile
             </Button>
           </Link>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-3xl font-bold text-foreground">Edit Profile & Registry</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Maintain your verified membership profile with structured updates and secure document uploads.
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-end">
           <Badge variant="secondary" className="gap-2">
             <ShieldCheck className="size-3.5" />
             {currentRoleLabel}
           </Badge>
-          <Button onClick={handleSave} disabled={isSaving} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto gap-2 bg-emerald-600 hover:bg-emerald-700">
             {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
             Save Changes
           </Button>
@@ -945,9 +945,9 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
             <CardContent className="space-y-4">
               <div className="flex items-center justify-center rounded-2xl border bg-muted/40 p-4">
                 {photoPreview ? (
-                  <img src={photoPreview} alt="Profile preview" className="size-28 rounded-2xl object-cover shadow-sm" />
+                  <img src={photoPreview} alt="Profile preview" className="h-28 w-28 rounded-2xl object-cover shadow-sm" />
                 ) : (
-                  <div className="flex size-28 items-center justify-center rounded-2xl bg-background text-3xl font-bold text-muted-foreground shadow-sm">
+                  <div className="flex h-28 w-28 items-center justify-center rounded-2xl bg-background text-3xl font-bold text-muted-foreground shadow-sm">
                     {String(currentUser?.fullName || currentUser?.name || "U").charAt(0)}
                   </div>
                 )}
@@ -997,15 +997,15 @@ export default function ProfileEditor({ backHref = "/dashboard/profile" }: { bac
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="flex items-center justify-between rounded-xl border px-3 py-2">
+              <div className="flex flex-col gap-2 rounded-xl border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-muted-foreground">Membership ID</span>
-                <span className="font-semibold">{currentUser?.membershipNumber || "Pending assignment"}</span>
+                <span className="font-semibold break-words">{currentUser?.membershipNumber || "Pending assignment"}</span>
               </div>
-              <div className="flex items-center justify-between rounded-xl border px-3 py-2">
+              <div className="flex flex-col gap-2 rounded-xl border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-muted-foreground">QR Code</span>
-                <span className="font-semibold">{currentUser?.qrCode || "Pending assignment"}</span>
+                <span className="font-semibold break-words">{currentUser?.qrCode || "Pending assignment"}</span>
               </div>
-              <div className="flex items-center justify-between rounded-xl border px-3 py-2">
+              <div className="flex flex-col gap-2 rounded-xl border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-muted-foreground">Verification</span>
                 <span className="font-semibold">{currentUser?.verificationStatus || "Verified"}</span>
               </div>
