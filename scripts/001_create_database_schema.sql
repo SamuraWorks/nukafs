@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   current_address TEXT,
   
   -- Profile Completion & Status
-  profile_completion_percentage INTEGER DEFAULT 0 CHECK (profile_completion_percentage >= 0 AND profile_completion_percentage <= 100),
+  profile_completion INTEGER DEFAULT 0 CHECK (profile_completion >= 0 AND profile_completion <= 100),
   status VARCHAR(50) DEFAULT 'pending' 
     CHECK (status IN ('pending', 'active_complete', 'active_partial', 'archived', 'deleted')),
   verification_status VARCHAR(50) DEFAULT 'unverified'
@@ -180,6 +180,8 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 
 -- Add missing columns to existing users table (if it was partially migrated)
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS profile_completion INTEGER DEFAULT 0;
+ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS profile_completion_percentage INTEGER DEFAULT 0;
 ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS course_name VARCHAR(255);
 ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS academic_level VARCHAR(50);
 ALTER TABLE IF EXISTS public.users ADD COLUMN IF NOT EXISTS student_id VARCHAR(100);

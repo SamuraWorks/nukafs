@@ -45,6 +45,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
+function isMissingColumnError(error: any, columnName: string): boolean {
+  if (!error) return false
+
+  const message = `${error?.message ?? ""} ${error?.details ?? ""}`.toLowerCase()
+  return (
+    error?.code === "42703" ||
+    error?.code === "PGRST204" ||
+    message.includes(`column \"${columnName}\"`) ||
+    message.includes(`column ${columnName}`) ||
+    message.includes("does not exist")
+  )
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
@@ -87,7 +100,7 @@ export async function PUT(request: NextRequest) {
       biography: profile?.biography,
       emergency_contact: profile?.emergencyContact,
       employment_status: profile?.employmentStatus,
-      profile_completion_percentage: profile?.profileCompletion,
+      profile_completion: profile?.profileCompletion,
       // Approval fields — only set when provided
       status: profile?.status,
       verification_status: profile?.verificationStatus,
@@ -103,10 +116,47 @@ export async function PUT(request: NextRequest) {
       Object.entries(rawPayload).filter(([, v]) => v !== undefined)
     )
 
-    const { data: updatedUserData, error: upsertError } = await supabase
-      .from("users")
-      .upsert({ id: userId, ...updatePayload }, { onConflict: "id" })
-      .select("*")
+    const upsertProfile = async (payload: Record<string, any>) =>
+      supabase
+        .from("users")
+        .upsert({ id: userId, ...payload }, { onConflict: "id" })
+        .select("*")
+
+    let updatedUserData
+    let upsertError
+
+    const basePayload = Object.fromEntries(
+      Object.entries(updatePayload).filter(([key]) => key !== "profile_completion" && key !== "profile_completion_percentage"),
+    )
+
+    const payloadAttempts = [
+      {
+        name: "preferred",
+        payload: {
+          ...basePayload,
+          ...(typeof profile?.profileCompletion === "number" ? { profile_completion: profile.profileCompletion } : {}),
+        },
+      },
+      {
+        name: "legacy",
+        payload: {
+          ...basePayload,
+          ...(typeof profile?.profileCompletion === "number" ? { profile_completion_percentage: profile.profileCompletion } : {}),
+        },
+      },
+      {
+        name: "no-completion",
+        payload: basePayload,
+      },
+    ]
+
+    for (const attempt of payloadAttempts) {
+      ;({ data: updatedUserData, error: upsertError } = await upsertProfile(attempt.payload))
+      if (!upsertError) break
+      if (!isMissingColumnError(upsertError, "profile_completion") && !isMissingColumnError(upsertError, "profile_completion_percentage")) {
+        break
+      }
+    }
 
     if (upsertError) {
       throw upsertError
