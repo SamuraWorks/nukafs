@@ -1,5 +1,6 @@
 import { ensureSupabaseClient } from "@/lib/supabase/client"
 import type { SupabaseUserProfile } from "@/lib/supabase/types"
+import { normalizeStringArray } from "@/lib/utils"
 
 export interface AuthResult {
   success: boolean
@@ -25,10 +26,8 @@ function normalizeString(value: unknown): string | undefined {
 }
 
 function normalizeArray(value: unknown): string[] | undefined {
-  if (Array.isArray(value)) {
-    return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
-  }
-  return undefined
+  const normalized = normalizeStringArray(value)
+  return normalized.length > 0 ? normalized : []
 }
 
 function normalizeBoolean(value: unknown): boolean | undefined {

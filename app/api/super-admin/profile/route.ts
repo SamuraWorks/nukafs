@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { normalizeStringArray } from "@/lib/utils"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,7 +66,7 @@ export async function PUT(request: NextRequest) {
         student_id: profile.studentId,
         admission_year: profile.admissionYear,
         graduation_year: profile.graduationYear,
-        skills: profile.skills,
+        skills: profile.skills === undefined ? undefined : normalizeStringArray(profile.skills),
         occupation: profile.occupation,
         biography: profile.biography,
         emergency_contact: profile.emergencyContact,

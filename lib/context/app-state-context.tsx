@@ -19,6 +19,7 @@ import {
   writeString,
   removeStorage,
 } from "@/lib/storage/persistence"
+import { normalizeStringArray } from "@/lib/utils"
 import { createMembershipIdentity } from "@/lib/membership"
 import {
   signInWithPassword,
@@ -624,7 +625,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       occupation: detailsAny.occupation as string | undefined,
       organization: detailsAny.organization as string | undefined,
       biography: (detailsAny.bio as string | undefined) || (detailsAny.biography as string | undefined),
-      skills: detailsAny.skills as string[] | undefined,
+      skills: detailsAny.skills === undefined ? undefined : normalizeStringArray(detailsAny.skills),
       emergencyContact:
         detailsAny.emergencyContact ??
         {
@@ -674,7 +675,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         occupation: currentUser.occupation,
         organization: currentUser.organization,
         biography: currentUser.biography,
-        skills: currentUser.skills,
+        skills: normalizeStringArray(currentUser.skills),
         emergencyContact: currentUser.emergencyContact,
         employmentStatus: currentUser.employmentStatus,
         status: currentUser.status,
@@ -779,7 +780,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         occupation: (details.occupation as string | undefined) ?? currentUser.occupation,
         organization: (details.organization as string | undefined) ?? currentUser.organization,
         biography: (details.bio as string | undefined) || (details.biography as string | undefined) || currentUser.biography,
-        skills: (details.skills as string[] | undefined) ?? currentUser.skills,
+        skills: details.skills === undefined ? normalizeStringArray(currentUser.skills) : normalizeStringArray(details.skills),
         emergencyContact:
           details.emergencyContact ??
           currentUser.emergencyContact ??
@@ -849,7 +850,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
                           ? "currentAddress"
                           : key
 
-        normalizedProfile[normalizedKey] = field.newValue
+        normalizedProfile[normalizedKey] =
+          normalizedKey === "skills"
+            ? normalizeStringArray(field.newValue)
+            : field.newValue
       })
 
       const response = await fetch("/api/profile", {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { normalizeStringArray } from "@/lib/utils"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -87,7 +88,18 @@ export async function POST(request: Request) {
     const insertPayload: Record<string, unknown> = {}
     for (const key of allowedColumns) {
       if (registration[key] !== undefined) {
-        insertPayload[key] = registration[key]
+        if (key === "profile") {
+          const profileValue = registration.profile as Record<string, unknown> | undefined
+          if (profileValue) {
+            const normalizedProfile = { ...profileValue }
+            if (normalizedProfile.skills !== undefined) {
+              normalizedProfile.skills = normalizeStringArray(normalizedProfile.skills)
+            }
+            insertPayload[key] = normalizedProfile
+          }
+        } else {
+          insertPayload[key] = registration[key]
+        }
       }
     }
 
